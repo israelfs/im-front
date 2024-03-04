@@ -5,15 +5,17 @@
       name="input todo"
       placeholder="Enter todo..."
       class="px-8 py-3 text-left"
+      [(ngModel)]="inputAddress"
     />
     <input
       class="px-6 py-3 bg-green-500 text-white text-bold"
       type="submit"
-      value="Add todo"
+      value="Add adress"
+      (click)="addAddress()"
     />
   </form>
   <div
-    *ngFor="let todo of todos"
+    *ngFor="let todo of address"
     class="flex border-b-2 border-slate-300 p-2 justify-between items-center"
   >
     <div>
