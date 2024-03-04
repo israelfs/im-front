@@ -1,19 +1,18 @@
 import {
   Component,
+  OnInit,
   ViewChild,
   ElementRef,
-  OnInit,
   AfterViewInit,
   OnDestroy,
 } from '@angular/core';
-import { Map, Marker, NavigationControl } from 'maplibre-gl';
+import { Map, Marker } from 'maplibre-gl';
 
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [],
   templateUrl: './map.component.html',
-  styleUrl: './map.component.css',
+  styleUrls: ['./map.component.css'],
 })
 export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   map: Map | undefined;
@@ -24,6 +23,8 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   private myAPIKey = 'a33609accdc248588025ae32858d52e2';
   private currentStyle = 0;
   private mapStyles = [
+    // `https://tile.opennstreetmap.org/{z}/{x}/{y}.png`,
+    'https://api.maptiler.com/maps/streets/style.json?key=nQRKKp2gwKsJ368E7KAJ',
     `https://maps.geoapify.com/v1/styles/osm-carto/style.json?apiKey=${this.myAPIKey}`,
     `https://maps.geoapify.com/v1/styles/osm-bright/style.json?apiKey=${this.myAPIKey}`,
     `https://maps.geoapify.com/v1/styles/osm-bright-grey/style.json?apiKey=${this.myAPIKey}`,
@@ -35,10 +36,10 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
 
   constructor() {}
 
-  ngOnInit() {}
+  ngOnInit(): void {}
 
   ngAfterViewInit() {
-    const initialState = { lng: 139.753, lat: 35.6844, zoom: 10 };
+    const initialState = { lng: 139.753, lat: 35.6844, zoom: 14 };
 
     this.map = new Map({
       container: this.mapContainer.nativeElement,
@@ -47,21 +48,17 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
       zoom: initialState.zoom,
     });
 
-    this.map.addControl(new NavigationControl(), 'top-right');
-
-    new Marker({ color: '#FF0000' })
-      .setLngLat([139.7525, 35.6846])
+    new Marker()
+      .setLngLat([initialState.lng, initialState.lat])
       .addTo(this.map);
-  }
-
-  onChangeMapStyle() {
-    this.currentStyle = (this.currentStyle + 1) % this.mapStyles.length;
-    if (this.map) {
-      this.map.setStyle(this.mapStyles[this.currentStyle]);
-    }
   }
 
   ngOnDestroy() {
     this.map?.remove();
+  }
+
+  onChangeStyle() {
+    this.currentStyle = (this.currentStyle + 1) % this.mapStyles.length;
+    this.map?.setStyle(this.mapStyles[this.currentStyle]);
   }
 }

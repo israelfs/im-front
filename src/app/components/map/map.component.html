@@ -1,1 +1,11 @@
-<p>map works!</p>
+<div class="flex flex-col mt-5">
+  <button
+    class="relative mx-auto max-w-2xl bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+    (click)="onChangeStyle()"
+  >
+    Switch map style
+  </button>
+  <div class="relative w-3/5 h-[50rem] mx-auto mt-5">
+    <div class="w-full h-full absolute" #map></div>
+  </div>
+</div>
