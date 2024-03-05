@@ -2,6 +2,13 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { AdressService } from '../../services/adress.service';
+
+export type AddressType = {
+  id: number;
+  address: string;
+};
+
 @Component({
   selector: 'app-todos',
   standalone: true,
@@ -10,38 +17,31 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './todos.component.css',
 })
 export class TodosComponent {
-  address = [
-    {
-      id: 1,
-      title: 'adrs One',
-      completed: false,
-    },
-    {
-      id: 2,
-      title: 'adrs Two',
-      completed: false,
-    },
-    {
-      id: 3,
-      title: 'adrs Three',
-      completed: false,
-    },
-  ];
+  address: AddressType[] = [];
 
   inputAddress = '';
 
-  constructor() {}
+  constructor(private addressService: AdressService) {}
 
   ngOnInit() {
     // call api here
   }
 
   addAddress() {
+    const id = this.address.length;
     this.address.push({
-      id: 4,
-      title: this.inputAddress,
-      completed: false,
+      id: id,
+      address: this.inputAddress,
+    });
+    this.addressService.addAddress({
+      id: id,
+      address: this.inputAddress,
     });
     this.inputAddress = '';
+  }
+
+  onRemoveAddress(index: number) {
+    this.address = this.address.filter((item) => item.id !== index);
+    this.addressService.removeAddress(index);
   }
 }

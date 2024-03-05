@@ -9,6 +9,9 @@ import {
 import { Map, Marker } from 'maplibre-gl';
 import { PhotonKomootService } from '../../services/photon-komoot.service';
 import { SharedComponentsModule } from '../../shared/shared-components.module';
+import { AdressService } from '../../services/adress.service';
+import { Subscription } from 'rxjs';
+import { AddressType } from '../todos/todos.component';
 
 @Component({
   selector: 'app-map',
@@ -19,6 +22,8 @@ import { SharedComponentsModule } from '../../shared/shared-components.module';
 })
 export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   map: Map | undefined;
+  private subscriptions: Subscription[] = [];
+  markers: Marker[] = [];
 
   @ViewChild('map')
   private mapContainer!: ElementRef<HTMLElement>;
@@ -38,9 +43,18 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     // `https://maps.geoapify.com/v1/styles/dark-matter-purple-roads/style.json?apiKey=${a33609accdc248588025ae32858d52e2}`,
   ];
 
-  constructor(private photonService: PhotonKomootService) {}
+  constructor(
+    private photonService: PhotonKomootService,
+    private adressService: AdressService
+  ) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.subscriptions.push(
+      this.adressService.adresses$.subscribe((addresses) => {
+        this.updateMarkers(addresses);
+      })
+    );
+  }
 
   ngAfterViewInit() {
     const initialState = {
@@ -100,39 +114,54 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
       zoom: initialState.zoom,
     });
 
-    new Marker()
-      .setLngLat([initialState.lng, initialState.lat])
-      .addTo(this.map);
+    // new Marker()
+    //   .setLngLat([initialState.lng, initialState.lat])
+    //   .addTo(this.map);
   }
 
   ngOnDestroy() {
+    this.subscriptions.forEach((subscription) => subscription.unsubscribe());
     this.map?.remove();
   }
 
   onChangeStyle() {
     this.currentStyle = (this.currentStyle + 1) % this.mapStyles.length;
     this.map?.setStyle(this.mapStyles[this.currentStyle]);
-
-    this.getCoordinates('Rua exp holz, 550 Joinville');
   }
 
-  getCoordinates(query: string) {
-    console.log('chamando a query:', query);
-    this.photonService.getCoordinates(query).subscribe(
-      (data) => {
-        console.log('Data:', data);
-        if (data.features && data.features.length > 0) {
-          const coordinates = data.features[0].geometry.coordinates;
-          const latitude = coordinates[1];
-          const longitude = coordinates[0];
-          console.log(`Latitude: ${latitude}, Longitude: ${longitude}`);
-        } else {
-          console.log('No coordinates found.');
+  updateMarkers(addresses: AddressType[]) {
+    this.markers.forEach((marker) => {
+      marker.remove();
+    });
+    this.markers = [];
+
+    addresses.forEach((address) => {
+      this.generateMarker(address.address);
+    });
+  }
+
+  generateMarker(query: string) {
+    this.subscriptions.push(
+      this.photonService.getCoordinates(query).subscribe(
+        (data) => {
+          if (data.features && data.features.length > 0) {
+            const coordinates = data.features[0].geometry.coordinates;
+            const latitude = coordinates[1];
+            const longitude = coordinates[0];
+            if (this.map) {
+              const marker = new Marker()
+                .setLngLat([longitude, latitude])
+                .addTo(this.map);
+              this.markers?.push(marker);
+            }
+          } else {
+            console.log('No coordinates found.');
+          }
+        },
+        (error) => {
+          console.error('Error:', error);
         }
-      },
-      (error) => {
-        console.error('Error:', error);
-      }
+      )
     );
   }
 }
