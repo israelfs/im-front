@@ -7,12 +7,15 @@ import {
   OnDestroy,
 } from '@angular/core';
 import { Map, Marker } from 'maplibre-gl';
+import { PhotonKomootService } from '../../services/photon-komoot.service';
+import { SharedComponentsModule } from '../../shared/shared-components.module';
 
 @Component({
   selector: 'app-map',
   standalone: true,
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.css'],
+  imports: [SharedComponentsModule],
 })
 export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   map: Map | undefined;
@@ -20,23 +23,22 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('map')
   private mapContainer!: ElementRef<HTMLElement>;
 
-  private myAPIKey = 'a33609accdc248588025ae32858d52e2';
   private currentStyle = 0;
   private mapStyles = [
     `https://api.maptiler.com/maps/bright-v2/style.json?key=nQRKKp2gwKsJ368E7KAJ`,
     `https://api.maptiler.com/maps/basic-v2/style.json?key=nQRKKp2gwKsJ368E7KAJ`,
     'https://api.maptiler.com/maps/streets/style.json?key=nQRKKp2gwKsJ368E7KAJ',
     'https://api.maptiler.com/maps/openstreetmap/style.json?key=nQRKKp2gwKsJ368E7KAJ',
-    // `https://maps.geoapify.com/v1/styles/osm-carto/style.json?apiKey=${this.myAPIKey}`,
-    // `https://maps.geoapify.com/v1/styles/osm-bright/style.json?apiKey=${this.myAPIKey}`,
-    // `https://maps.geoapify.com/v1/styles/osm-bright-grey/style.json?apiKey=${this.myAPIKey}`,
-    // `https://maps.geoapify.com/v1/styles/klokantech-basic/style.json?apiKey=${this.myAPIKey}`,
-    // `https://maps.geoapify.com/v1/styles/osm-liberty/style.json?apiKey=${this.myAPIKey}`,
-    // `https://maps.geoapify.com/v1/styles/maptiler-3d/style.json?apiKey=${this.myAPIKey}`,
-    // `https://maps.geoapify.com/v1/styles/dark-matter-purple-roads/style.json?apiKey=${this.myAPIKey}`,
+    // `https://maps.geoapify.com/v1/styles/osm-carto/style.json?apiKey=${a33609accdc248588025ae32858d52e2}`,
+    // `https://maps.geoapify.com/v1/styles/osm-bright/style.json?apiKey=${a33609accdc248588025ae32858d52e2}`,
+    // `https://maps.geoapify.com/v1/styles/osm-bright-grey/style.json?apiKey=${a33609accdc248588025ae32858d52e2}`,
+    // `https://maps.geoapify.com/v1/styles/klokantech-basic/style.json?apiKey=${a33609accdc248588025ae32858d52e2}`,
+    // `https://maps.geoapify.com/v1/styles/osm-liberty/style.json?apiKey=${a33609accdc248588025ae32858d52e2}`,
+    // `https://maps.geoapify.com/v1/styles/maptiler-3d/style.json?apiKey=${a33609accdc248588025ae32858d52e2}`,
+    // `https://maps.geoapify.com/v1/styles/dark-matter-purple-roads/style.json?apiKey=${a33609accdc248588025ae32858d52e2}`,
   ];
 
-  constructor() {}
+  constructor(private photonService: PhotonKomootService) {}
 
   ngOnInit(): void {}
 
@@ -110,5 +112,27 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   onChangeStyle() {
     this.currentStyle = (this.currentStyle + 1) % this.mapStyles.length;
     this.map?.setStyle(this.mapStyles[this.currentStyle]);
+
+    this.getCoordinates('Rua exp holz, 550 Joinville');
+  }
+
+  getCoordinates(query: string) {
+    console.log('chamando a query:', query);
+    this.photonService.getCoordinates(query).subscribe(
+      (data) => {
+        console.log('Data:', data);
+        if (data.features && data.features.length > 0) {
+          const coordinates = data.features[0].geometry.coordinates;
+          const latitude = coordinates[1];
+          const longitude = coordinates[0];
+          console.log(`Latitude: ${latitude}, Longitude: ${longitude}`);
+        } else {
+          console.log('No coordinates found.');
+        }
+      },
+      (error) => {
+        console.error('Error:', error);
+      }
+    );
   }
 }
