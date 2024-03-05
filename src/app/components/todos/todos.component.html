@@ -4,11 +4,11 @@
       type="text"
       name="input todo"
       placeholder="Enter address..."
-      class="px-8 py-3 text-left"
+      class="px-8 py-3 text-left shadow-lg rounded-lg"
       [(ngModel)]="inputAddress"
     />
     <input
-      class="px-6 py-3 bg-green-500 text-white text-bold"
+      class="ml-1 px-6 py-3 bg-green-500 text-white font-bold shadow-lg rounded-lg hover:bg-green-700 transition duration-300 ease-in-out cursor-pointer"
       type="submit"
       value="Add adress"
       (click)="addAddress()"
@@ -22,7 +22,7 @@
       {{ todo.address }}
     </div>
     <button
-      class="rounded-lg border-2 p-2 hover:bg-red-500 hover:text-white transition duration-300 ease-in-out"
+      class="rounded-lg p-2 font-semibold text-white bg-red-500 hover:bg-red-600 transition duration-300 ease-in-out"
       (click)="onRemoveAddress(todo.id)"
     >
       Remove

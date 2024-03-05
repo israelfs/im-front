@@ -1,11 +1,13 @@
 <div class="flex flex-col mt-5">
   <button
-    class="relative mx-auto max-w-2xl bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+    class="relative mx-auto max-w-2xl bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition duration-300 ease-in-out"
     (click)="onChangeStyle()"
   >
     Switch map style
   </button>
-  <div class="relative w-3/5 h-[50rem] mx-auto mt-5">
+  <div
+    class="relative w-3/5 h-[50rem] mx-auto mt-5 border-2 border-slate-500 overflow-hidden rounded-lg shadow-2xl"
+  >
     <div class="w-full h-full absolute" #map></div>
   </div>
 </div>

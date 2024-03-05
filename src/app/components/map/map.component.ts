@@ -6,7 +6,7 @@ import {
   AfterViewInit,
   OnDestroy,
 } from '@angular/core';
-import { Map, Marker } from 'maplibre-gl';
+import maplibregl, { Map, Marker } from 'maplibre-gl';
 import { PhotonKomootService } from '../../services/photon-komoot.service';
 import { SharedComponentsModule } from '../../shared/shared-components.module';
 import { AdressService } from '../../services/adress.service';
@@ -149,10 +149,48 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
             const latitude = coordinates[1];
             const longitude = coordinates[0];
             if (this.map) {
-              const marker = new Marker()
+              const popup = new maplibregl.Popup({ offset: 25 }).setText(query);
+
+              const marker = new Marker({
+                color: '#FF5733',
+                draggable: true,
+              })
                 .setLngLat([longitude, latitude])
-                .addTo(this.map);
-              this.markers?.push(marker);
+                .setPopup(popup)
+                .addTo(this.map)
+                .on('dragend', () => {
+                  const newCoordinates = marker.getLngLat();
+                  this.subscriptions.push(
+                    this.photonService
+                      .getGeoCoding(newCoordinates.lat, newCoordinates.lng)
+                      .subscribe(
+                        (newData) => {
+                          if (newData.features && newData.features.length > 0) {
+                            const newStreet =
+                              newData.features[0].properties.street ||
+                              newData.features[0].properties.name;
+                            const newNumber =
+                              newData.features[0].properties.housenumber || '';
+                            const newCity = newData.features[0].properties.city;
+                            const newCountryCode =
+                              newData.features[0].properties.countrycode;
+                            popup.setText(
+                              newNumber
+                                ? `${newStreet}, ${newNumber}, ${newCity}, ${newCountryCode}`
+                                : `${newStreet}, ${newCity}, ${newCountryCode}`
+                            );
+                          } else {
+                            popup.setText('No address found.');
+                          }
+                        },
+                        (error) => {
+                          console.error('Error:', error);
+                        }
+                      )
+                  );
+                });
+
+              this.markers.push(marker);
             }
           } else {
             console.log('No coordinates found.');

@@ -11,4 +11,9 @@ export class PhotonKomootService {
   public getCoordinates(query: string): Observable<any> {
     return this.http.get(`https://photon.komoot.io/api/?q=${query}&limit=5`);
   }
+  public getGeoCoding(lat: number, lon: number): Observable<any> {
+    return this.http.get(
+      `https://photon.komoot.io/reverse?lon=${lon}&lat=${lat}`
+    );
+  }
 }
