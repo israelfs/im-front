@@ -24,24 +24,26 @@ export class TodosComponent {
   constructor(private addressService: AdressService) {}
 
   ngOnInit() {
-    // call api here
+    // call api here also
+    this.addressService.adresses$.subscribe((addresses) => {
+      this.address = addresses;
+    });
   }
-
   addAddress() {
     const id = this.address.length;
-    this.address.push({
+    const newAddress: AddressType = {
       id: id,
       address: this.inputAddress,
-    });
-    this.addressService.addAddress({
-      id: id,
-      address: this.inputAddress,
-    });
+    };
+    this.addressService.addAddress(newAddress);
     this.inputAddress = '';
   }
 
-  onRemoveAddress(index: number) {
-    this.address = this.address.filter((item) => item.id !== index);
-    this.addressService.removeAddress(index);
+  onRemoveAddress(id: number) {
+    this.addressService.removeAddress(id);
+  }
+
+  onEditAddress(updatedAddress: AddressType) {
+    this.addressService.editAddress(updatedAddress);
   }
 }

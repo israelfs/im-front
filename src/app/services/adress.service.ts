@@ -24,4 +24,11 @@ export class AdressService {
       addresses.filter((address) => address.id !== index)
     );
   }
+
+  editAddress(address: AddressType) {
+    const addresses = this.addressesSubject.getValue();
+    const index = addresses.findIndex((a) => a.id === address.id);
+    addresses[index] = address;
+    this.addressesSubject.next(addresses);
+  }
 }

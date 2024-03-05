@@ -136,11 +136,11 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     this.markers = [];
 
     addresses.forEach((address) => {
-      this.generateMarker(address.address);
+      this.generateMarker(address.address, address.id);
     });
   }
 
-  generateMarker(query: string) {
+  generateMarker(query: string, index: number) {
     this.subscriptions.push(
       this.photonService.getCoordinates(query).subscribe(
         (data) => {
@@ -174,13 +174,22 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
                             const newCity = newData.features[0].properties.city;
                             const newCountryCode =
                               newData.features[0].properties.countrycode;
-                            popup.setText(
-                              newNumber
-                                ? `${newStreet}, ${newNumber}, ${newCity}, ${newCountryCode}`
-                                : `${newStreet}, ${newCity}, ${newCountryCode}`
-                            );
+
+                            const newText = newNumber
+                              ? `${newStreet}, ${newNumber}, ${newCity}, ${newCountryCode}`
+                              : `${newStreet}, ${newCity}, ${newCountryCode}`;
+
+                            popup.setText(newText);
+                            this.adressService.editAddress({
+                              id: index,
+                              address: newText,
+                            });
                           } else {
                             popup.setText('No address found.');
+                            this.adressService.editAddress({
+                              id: index,
+                              address: 'No address found.',
+                            });
                           }
                         },
                         (error) => {
