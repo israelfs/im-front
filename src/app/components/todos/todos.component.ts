@@ -6,7 +6,7 @@ import { AdressService } from '../../services/adress.service';
 
 export type AddressType = {
   id: number;
-  address: string;
+  title: string;
 };
 
 @Component({
@@ -33,7 +33,7 @@ export class TodosComponent {
     const id = this.address.length;
     const newAddress: AddressType = {
       id: id,
-      address: this.inputAddress,
+      title: this.inputAddress,
     };
     this.addressService.addAddress(newAddress);
     this.inputAddress = '';

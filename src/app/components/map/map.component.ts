@@ -53,6 +53,16 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     this.subscriptions.push(
+      this.adressService.getTodos().subscribe(
+        (data) => {
+          this.adressService.setAddresses(data);
+        },
+        (error) => {
+          console.error('Error:', error);
+        }
+      )
+    );
+    this.subscriptions.push(
       this.adressService.adresses$.subscribe((addresses) => {
         this.updateMarkers(addresses);
       })
@@ -134,26 +144,16 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   updateGeoJsonLine(data?: any) {
-    if (!this.map) {
-      return;
-    }
-
-    if (this.map.getLayer('route')) {
-      this.map.removeLayer('route');
-      this.map.removeSource('route');
-    }
-
     const geoJson = {
       type: 'Feature',
       properties: {},
       geometry: data?.routes[0].geometry,
     };
-
-    this.map.addSource('route', {
+    this.map!.addSource('route', {
       type: 'geojson',
       data: geoJson as any,
     });
-    this.map.addLayer({
+    this.map!.addLayer({
       id: 'route',
       type: 'line',
       source: 'route',
@@ -177,7 +177,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
 
     await Promise.all(
       addresses.map((address, index) =>
-        this.generateMarker(address.address, index)
+        this.generateMarker(address.title, address.id)
       )
     );
 
@@ -185,6 +185,15 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   updateRoute() {
+    if (!this.map) {
+      return;
+    }
+
+    if (this.map.getLayer('route')) {
+      this.map.removeLayer('route');
+      this.map.removeSource('route');
+    }
+
     const coordinates = this.markers.map((marker) =>
       marker.getLngLat().toArray()
     );
@@ -218,7 +227,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
                 );
 
                 const marker = new Marker({
-                  color: colors[index],
+                  color: colors[index % colors.length],
                   draggable: true,
                 })
                   .setLngLat([longitude, latitude])
@@ -253,13 +262,13 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
                               popup.setText(newText);
                               this.adressService.editAddress({
                                 id: index,
-                                address: newText,
+                                title: newText,
                               });
                             } else {
                               popup.setText('No address found.');
                               this.adressService.editAddress({
                                 id: index,
-                                address: 'No address found.',
+                                title: 'No address found.',
                               });
                             }
                           },
