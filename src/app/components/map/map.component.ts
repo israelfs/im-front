@@ -12,6 +12,8 @@ import { SharedComponentsModule } from '../../shared/shared-components.module';
 import { AdressService } from '../../services/adress.service';
 import { Subscription } from 'rxjs';
 import { AddressType } from '../todos/todos.component';
+import { OsrmService } from '../../services/osrm.service';
+import { colors } from '../../shared/colors';
 
 @Component({
   selector: 'app-map',
@@ -45,7 +47,8 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
 
   constructor(
     private photonService: PhotonKomootService,
-    private adressService: AdressService
+    private adressService: AdressService,
+    private osrmService: OsrmService
   ) {}
 
   ngOnInit(): void {
@@ -60,7 +63,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     const initialState = {
       lng: -48.85326977116436,
       lat: -26.30014974440676,
-      zoom: 14,
+      zoom: 12,
     };
 
     const osmStyle = {
@@ -129,86 +132,154 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     this.map?.setStyle(this.mapStyles[this.currentStyle]);
   }
 
-  updateMarkers(addresses: AddressType[]) {
+  updateGeoJsonLine(data?: any) {
+    if (!this.map) {
+      return;
+    }
+
+    if (this.map.getLayer('route')) {
+      this.map.removeLayer('route');
+      this.map.removeSource('route');
+    }
+
+    const geoJson = {
+      type: 'Feature',
+      properties: {},
+      geometry: data?.routes[0].geometry,
+    };
+
+    this.map.addSource('route', {
+      type: 'geojson',
+      data: geoJson as any,
+    });
+    this.map.addLayer({
+      id: 'route',
+      type: 'line',
+      source: 'route',
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round',
+      },
+      paint: {
+        'line-color': '#FF0000',
+        'line-width': 5,
+        'line-opacity': 0.5,
+      },
+    });
+  }
+
+  async updateMarkers(addresses: AddressType[]) {
     this.markers.forEach((marker) => {
       marker.remove();
     });
     this.markers = [];
 
-    addresses.forEach((address) => {
-      this.generateMarker(address.address, address.id);
-    });
-  }
-
-  generateMarker(query: string, index: number) {
-    this.subscriptions.push(
-      this.photonService.getCoordinates(query).subscribe(
-        (data) => {
-          if (data.features && data.features.length > 0) {
-            const coordinates = data.features[0].geometry.coordinates;
-            const latitude = coordinates[1];
-            const longitude = coordinates[0];
-            if (this.map) {
-              const popup = new maplibregl.Popup({ offset: 25 }).setText(query);
-
-              const marker = new Marker({
-                color: '#FF5733',
-                draggable: true,
-              })
-                .setLngLat([longitude, latitude])
-                .setPopup(popup)
-                .addTo(this.map)
-                .on('dragend', () => {
-                  const newCoordinates = marker.getLngLat();
-                  this.subscriptions.push(
-                    this.photonService
-                      .getGeoCoding(newCoordinates.lat, newCoordinates.lng)
-                      .subscribe(
-                        (newData) => {
-                          if (newData.features && newData.features.length > 0) {
-                            const newStreet =
-                              newData.features[0].properties.street ||
-                              newData.features[0].properties.name;
-                            const newNumber =
-                              newData.features[0].properties.housenumber || '';
-                            const newCity = newData.features[0].properties.city;
-                            const newCountryCode =
-                              newData.features[0].properties.countrycode;
-
-                            const newText = newNumber
-                              ? `${newStreet}, ${newNumber}, ${newCity}, ${newCountryCode}`
-                              : `${newStreet}, ${newCity}, ${newCountryCode}`;
-
-                            popup.setText(newText);
-                            this.adressService.editAddress({
-                              id: index,
-                              address: newText,
-                            });
-                          } else {
-                            popup.setText('No address found.');
-                            this.adressService.editAddress({
-                              id: index,
-                              address: 'No address found.',
-                            });
-                          }
-                        },
-                        (error) => {
-                          console.error('Error:', error);
-                        }
-                      )
-                  );
-                });
-
-              this.markers.push(marker);
-            }
-          } else {
-            console.log('No coordinates found.');
-          }
-        },
-        (error) => {
-          console.error('Error:', error);
-        }
+    await Promise.all(
+      addresses.map((address, index) =>
+        this.generateMarker(address.address, index)
       )
     );
+
+    const coordinates = this.markers.map((marker) =>
+      marker.getLngLat().toArray()
+    );
+
+    if (coordinates.length > 1) {
+      this.subscriptions.push(
+        this.osrmService.getRouting(coordinates).subscribe(
+          (data) => {
+            this.updateGeoJsonLine(data);
+          },
+          (error) => {
+            console.error('Error:', error);
+          }
+        )
+      );
+    }
+
+    this.updateGeoJsonLine();
+  }
+
+  generateMarker(query: string, index: number): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.subscriptions.push(
+        this.photonService.getCoordinates(query).subscribe(
+          (data) => {
+            if (data.features && data.features.length > 0) {
+              const coordinates = data.features[0].geometry.coordinates;
+              const latitude = coordinates[1];
+              const longitude = coordinates[0];
+              if (this.map) {
+                const popup = new maplibregl.Popup({ offset: 25 }).setText(
+                  query
+                );
+
+                const marker = new Marker({
+                  color: colors[index],
+                  draggable: true,
+                })
+                  .setLngLat([longitude, latitude])
+                  .setPopup(popup)
+                  .addTo(this.map)
+                  .on('dragend', () => {
+                    const newCoordinates = marker.getLngLat();
+                    this.subscriptions.push(
+                      this.photonService
+                        .getGeoCoding(newCoordinates.lat, newCoordinates.lng)
+                        .subscribe(
+                          (newData) => {
+                            if (
+                              newData.features &&
+                              newData.features.length > 0
+                            ) {
+                              const newStreet =
+                                newData.features[0].properties.street ||
+                                newData.features[0].properties.name;
+                              const newNumber =
+                                newData.features[0].properties.housenumber ||
+                                '';
+                              const newCity =
+                                newData.features[0].properties.city;
+                              const newCountryCode =
+                                newData.features[0].properties.countrycode;
+
+                              const newText = newNumber
+                                ? `${newStreet}, ${newNumber}, ${newCity}, ${newCountryCode}`
+                                : `${newStreet}, ${newCity}, ${newCountryCode}`;
+
+                              popup.setText(newText);
+                              this.adressService.editAddress({
+                                id: index,
+                                address: newText,
+                              });
+                            } else {
+                              popup.setText('No address found.');
+                              this.adressService.editAddress({
+                                id: index,
+                                address: 'No address found.',
+                              });
+                            }
+                          },
+                          (error) => {
+                            console.error('Error:', error);
+                          }
+                        )
+                    );
+                  });
+
+                this.markers.push(marker);
+                resolve();
+              }
+            } else {
+              console.log('No coordinates found.');
+            }
+          },
+          (error) => {
+            console.error('Error:', error);
+            reject(error);
+          }
+        )
+      );
+    });
   }
 }
