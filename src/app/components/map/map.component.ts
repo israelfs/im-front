@@ -130,6 +130,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   onChangeStyle() {
     this.currentStyle = (this.currentStyle + 1) % this.mapStyles.length;
     this.map?.setStyle(this.mapStyles[this.currentStyle]);
+    this.updateRoute();
   }
 
   updateGeoJsonLine(data?: any) {
@@ -180,6 +181,10 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
       )
     );
 
+    this.updateRoute();
+  }
+
+  updateRoute() {
     const coordinates = this.markers.map((marker) =>
       marker.getLngLat().toArray()
     );
@@ -196,8 +201,6 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
         )
       );
     }
-
-    this.updateGeoJsonLine();
   }
 
   generateMarker(query: string, index: number): Promise<void> {
