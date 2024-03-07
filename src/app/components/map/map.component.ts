@@ -52,6 +52,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.adressService.openWebSocket();
     this.subscriptions.push(
       this.adressService.getTodos().subscribe(
         (data) => {
@@ -133,6 +134,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.adressService.closeWebSocket();
     this.subscriptions.forEach((subscription) => subscription.unsubscribe());
     this.map?.remove();
   }

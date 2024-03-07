@@ -13,6 +13,41 @@ export class AdressService {
 
   constructor(private http: HttpClient) {}
 
+  private ws!: WebSocket;
+
+  openWebSocket() {
+    this.ws = new WebSocket('ws://localhost:3000');
+
+    this.ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    this.ws.onmessage = (event) => {
+      console.log(event.data);
+      if (event.data === 'Refetch Data') {
+        this.getTodos().subscribe(
+          // Refetch data
+          (data) => {
+            this.setAddresses(data);
+          },
+          (error) => {
+            console.error('Error:', error);
+          }
+        );
+      }
+    };
+  }
+
+  closeWebSocket() {
+    if (this.ws) {
+      this.ws.close();
+    }
+  }
+
+  notifyServerOfChange() {
+    this.ws.send('Refetch Data');
+  }
+
   addAddress(address: AddressType) {
     const addresses = this.addressesSubject.getValue();
     addresses.push(address);
@@ -20,6 +55,7 @@ export class AdressService {
     this.createTodo(address).subscribe(
       (data) => {
         console.log('Created:', data);
+        this.notifyServerOfChange();
       },
       (error) => {
         console.error('Error:', error);
@@ -35,6 +71,7 @@ export class AdressService {
     this.removeTodo(index).subscribe(
       (data) => {
         console.log('Deleted:', data);
+        this.notifyServerOfChange();
       },
       (error) => {
         console.error('Error:', error);
@@ -48,6 +85,7 @@ export class AdressService {
     this.editTodo(address).subscribe(
       (data) => {
         console.log('Updated:', data);
+        this.notifyServerOfChange();
         addresses[index] = address;
         this.addressesSubject.next(addresses);
       },
