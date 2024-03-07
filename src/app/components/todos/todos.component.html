@@ -1,28 +1,46 @@
 <div class="flex flex-col items-center justify-center">
-  <form class="input m-5 w-full max-w-md">
+  <form
+    class="input m-5 w-full max-w-md space-y-3 border-2 border-slate-300 p-3 rounded-lg shadow-md"
+    (ngSubmit)="validateAndAddAddress()"
+  >
     <input
       type="text"
-      name="input todo"
+      name="title"
+      placeholder="Enter title..."
+      class="px-8 py-3 text-left shadow-lg rounded-lg w-full"
+      [(ngModel)]="inputTitle"
+      required="required"
+    />
+    <input
+      type="text"
+      name="address"
       placeholder="Enter address..."
       class="px-8 py-3 text-left shadow-lg rounded-lg w-full"
       [(ngModel)]="inputAddress"
+      required="required"
     />
     <input
       class="mt-3 w-full px-6 py-2 bg-green-500 text-white font-semibold shadow-lg rounded-lg hover:bg-green-700 transition duration-300 ease-in-out cursor-pointer"
       type="submit"
       value="Add address"
-      (click)="addAddress()"
     />
   </form>
   <div
-    class="w-full max-w-md overflow-y-auto max-h-[28rem]"
-    [class.pr-3]="address.length > 5"
+    class="w-full max-w-md overflow-y-auto max-h-[25rem]"
+    [class.pr-3]="address.length > 4"
   >
     <div
       *ngFor="let todo of address"
-      class="flex justify-between items-center bg-white shadow-lg rounded-lg mb-5 p-3"
+      class="flex justify-between items-center bg-white shadow-lg rounded-lg mb-5 p-3 w-full"
     >
-      <div class="text-gray-800 text-lg truncate">{{ todo.title }}</div>
+      <div class="flex flex-col space-y-1 min-w-0">
+        <div class="text-gray-800 text-lg w-full truncate">
+          {{ todo.title }}
+        </div>
+        <div class="text-gray-400 text-sm w-full truncate">
+          {{ todo.address }}
+        </div>
+      </div>
       <button
         class="rounded-lg p-2 font-semibold text-white bg-red-500 hover:bg-red-600 transition duration-300 ease-in-out"
         (click)="onRemoveAddress(todo.id)"

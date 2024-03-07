@@ -1,9 +1,9 @@
 import { environment } from '../../../environments/environment.development';
 
 export const mapStyles = [
+  `https://api.maptiler.com/maps/streets/style.json?key=${environment.MAPTILER_KEY}`,
   `https://api.maptiler.com/maps/bright-v2/style.json?key=${environment.MAPTILER_KEY}`,
   `https://api.maptiler.com/maps/basic-v2/style.json?key=${environment.MAPTILER_KEY}`,
-  `https://api.maptiler.com/maps/streets/style.json?key=${environment.MAPTILER_KEY}`,
   `https://api.maptiler.com/maps/openstreetmap/style.json?key=${environment.MAPTILER_KEY}`,
 ];
 

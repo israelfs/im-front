@@ -43,7 +43,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     this.adressService.openWebSocket();
     this.subscriptions.push(
       this.adressService.getTodos().subscribe(
-        (data) => {
+        (data: AddressType[]) => {
           this.adressService.setAddresses(data);
         },
         (error) => {
@@ -121,9 +121,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     this.markers = [];
 
     await Promise.all(
-      addresses.map((address, index) =>
-        this.generateMarker(address.title, address.id)
-      )
+      addresses.map((address, index) => this.generateMarker(address))
     );
 
     this.updateRoute();
@@ -157,86 +155,74 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  generateMarker(query: string, index: number): Promise<void> {
+  generateMarker(address: AddressType): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.subscriptions.push(
-        this.photonService.getCoordinates(query).subscribe(
-          (data) => {
+      const { lat, lng, id } = address;
+
+      if (this.map) {
+        const popup = new maplibregl.Popup({ offset: 25 });
+
+        this.subscriptions.push(
+          this.photonService.getGeoCoding(lat!, lng!).subscribe((data) => {
             if (data.features && data.features.length > 0) {
-              const coordinates = data.features[0].geometry.coordinates;
-              const latitude = coordinates[1];
-              const longitude = coordinates[0];
-              if (this.map) {
-                const popup = new maplibregl.Popup({ offset: 25 }).setText(
-                  query
-                );
-
-                const marker = new Marker({
-                  color: colors[index % colors.length],
-                  draggable: true,
-                })
-                  .setLngLat([longitude, latitude])
-                  .setPopup(popup)
-                  .addTo(this.map)
-                  .on('dragend', () => {
-                    const newCoordinates = marker.getLngLat();
-                    this.subscriptions.push(
-                      this.photonService
-                        .getGeoCoding(newCoordinates.lat, newCoordinates.lng)
-                        .subscribe(
-                          (newData) => {
-                            if (
-                              newData.features &&
-                              newData.features.length > 0
-                            ) {
-                              const newStreet =
-                                newData.features[0].properties.street ||
-                                newData.features[0].properties.name;
-                              const newNumber =
-                                newData.features[0].properties.housenumber ||
-                                '';
-                              const newCity =
-                                newData.features[0].properties.city;
-                              const newCountryCode =
-                                newData.features[0].properties.countrycode;
-
-                              const newText = newNumber
-                                ? `${newStreet}, ${newNumber}, ${newCity}, ${newCountryCode}`
-                                : `${newStreet}, ${newCity}, ${newCountryCode}`;
-
-                              popup.setText(newText);
-                              this.adressService.editAddress({
-                                id: index,
-                                title: newText,
-                              });
-                            } else {
-                              popup.setText('No address found.');
-                              this.adressService.editAddress({
-                                id: index,
-                                title: 'No address found.',
-                              });
-                            }
-                          },
-                          (error) => {
-                            console.error('Error:', error);
-                          }
-                        )
-                    );
-                  });
-
-                this.markers.push(marker);
-                resolve();
-              }
-            } else {
-              console.log('No coordinates found.');
+              const newText = this.photonService.getFormatedString(data);
+              popup.setHTML(
+                `<div class="text-xs text-gray-700">
+                  ${newText}
+                </div>`
+              );
             }
-          },
-          (error) => {
-            console.error('Error:', error);
-            reject(error);
-          }
-        )
-      );
+          })
+        );
+
+        const marker = new maplibregl.Marker({
+          color: colors[Math.abs(id) % colors.length],
+          draggable: true,
+        })
+          .setLngLat([lng!, lat!])
+          .setPopup(popup)
+          .addTo(this.map)
+          .on('dragend', () => {
+            const newCoordinates = marker.getLngLat();
+            this.subscriptions.push(
+              this.photonService
+                .getGeoCoding(newCoordinates.lat, newCoordinates.lng)
+                .subscribe(
+                  (newData) => {
+                    const hasFeatures =
+                      newData.features && newData.features.length > 0;
+                    const newText = hasFeatures
+                      ? this.photonService.getFormatedString(newData)
+                      : 'No address found.';
+
+                    const newAddress = {
+                      ...address,
+                      address: newText,
+                      lat: newCoordinates.lat,
+                      lng: newCoordinates.lng,
+                    };
+
+                    popup.setText(newText);
+
+                    if (newAddress.id < 0) {
+                      this.adressService.addAddress(newAddress);
+                    } else {
+                      this.adressService.editAddress(newAddress);
+                    }
+                  },
+                  (error) => {
+                    console.error('Error:', error);
+                  }
+                )
+            );
+          });
+
+        this.markers.push(marker);
+        resolve();
+      } else {
+        console.log('No map instance found.');
+        reject(new Error('No map instance found.'));
+      }
     });
   }
 }

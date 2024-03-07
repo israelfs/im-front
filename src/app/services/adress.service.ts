@@ -1,8 +1,16 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  catchError,
+  map,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { AddressType } from '../components/todos/todos.component';
 import { environment } from '../../environments/environment.development';
+import { PhotonKomootService } from './photon-komoot.service';
 
 @Injectable({
   providedIn: 'root',
@@ -12,7 +20,10 @@ export class AdressService {
 
   adresses$ = this.addressesSubject.asObservable();
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private photonService: PhotonKomootService
+  ) {}
 
   private ws!: WebSocket;
 
@@ -49,29 +60,52 @@ export class AdressService {
     this.ws.send('Refetch Data');
   }
 
-  addAddress(address: AddressType) {
-    const addresses = this.addressesSubject.getValue();
-    addresses.push(address);
-    this.addressesSubject.next(addresses);
-    this.createTodo(address).subscribe(
-      (data) => {
-        console.log('Created:', data);
-        this.notifyServerOfChange();
-      },
-      (error) => {
-        console.error('Error:', error);
-      }
-    );
+  addAddress(address: AddressType): void {
+    this.photonService
+      .getCoordinates(address.address!)
+      .pipe(
+        switchMap((data) => {
+          if (data.features && data.features.length > 0) {
+            const newAddress = {
+              ...address,
+              lat: data.features[0].geometry.coordinates[1],
+              lng: data.features[0].geometry.coordinates[0],
+            };
+
+            return this.createTodo(newAddress);
+          } else {
+            throw new Error('No features returned from getCoordinates');
+          }
+        }),
+        switchMap((response) => {
+          return this.photonService
+            .getGeoCoding(response.lat, response.lng)
+            .pipe(
+              map((geoCodingData) => ({
+                ...response,
+                address: this.photonService.getFormatedString(geoCodingData),
+              }))
+            );
+        }),
+        tap(() => this.notifyServerOfChange())
+      )
+      .subscribe((response) => {
+        if (response) {
+          this.addressesSubject.next([
+            ...this.addressesSubject.getValue(),
+            response,
+          ]);
+        }
+      });
   }
 
   removeAddress(index: number) {
-    const addresses = this.addressesSubject.getValue();
-    this.addressesSubject.next(
-      addresses.filter((address) => address.id !== index)
-    );
     this.removeTodo(index).subscribe(
       (data) => {
-        console.log('Deleted:', data);
+        const addresses = this.addressesSubject.getValue();
+        this.addressesSubject.next(
+          addresses.filter((address) => address.id !== index)
+        );
         this.notifyServerOfChange();
       },
       (error) => {
@@ -81,14 +115,13 @@ export class AdressService {
   }
 
   editAddress(address: AddressType) {
-    const addresses = this.addressesSubject.getValue();
-    const index = addresses.findIndex((a) => a.id === address.id);
     this.editTodo(address).subscribe(
       (data) => {
-        console.log('Updated:', data);
-        this.notifyServerOfChange();
+        const addresses = this.addressesSubject.getValue();
+        const index = addresses.findIndex((a) => a.id === address.id);
         addresses[index] = address;
         this.addressesSubject.next(addresses);
+        this.notifyServerOfChange();
       },
       (error) => {
         console.error('Error:', error);
@@ -97,6 +130,16 @@ export class AdressService {
   }
 
   setAddresses(addresses: AddressType[]) {
+    addresses.forEach((address) => {
+      this.photonService
+        .getGeoCoding(address.lat!, address.lng!)
+        .subscribe((data) => {
+          if (data.features && data.features.length > 0) {
+            const newText = this.photonService.getFormatedString(data);
+            address.address = newText;
+          }
+        });
+    });
     this.addressesSubject.next(addresses);
   }
 
@@ -111,12 +154,16 @@ export class AdressService {
   createTodo(todo: AddressType): Observable<any> {
     return this.http.post(`${environment.BACKEND_URL}/todo`, {
       title: todo.title,
+      lat: todo.lat,
+      lng: todo.lng,
     });
   }
 
   editTodo(todo: AddressType): Observable<any> {
     return this.http.put(`${environment.BACKEND_URL}/todo/${todo.id}`, {
       title: todo.title,
+      lat: todo.lat,
+      lng: todo.lng,
     });
   }
 
