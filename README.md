@@ -2,6 +2,22 @@
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 17.1.3.
 
+## Configuration
+
+First generate the environment file with the following command:
+
+```bash
+ng generate environments
+```
+
+Then fill the environment.ts and environment.development.ts files with the following content:
+
+```typescript
+BACKEND_URL: '',
+WEBSOCKET_URL: '',
+MAPTILER_KEY: '',
+```
+
 ## Development server
 
 Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { AddressType } from '../components/todos/todos.component';
+import { environment } from '../../environments/environment.development';
 
 @Injectable({
   providedIn: 'root',
@@ -16,7 +17,7 @@ export class AdressService {
   private ws!: WebSocket;
 
   openWebSocket() {
-    this.ws = new WebSocket('ws://localhost:3000');
+    this.ws = new WebSocket(environment.WEBSOCKET_URL);
 
     this.ws.onerror = (error) => {
       console.error('WebSocket error:', error);
@@ -100,26 +101,26 @@ export class AdressService {
   }
 
   getTodos(): Observable<any> {
-    return this.http.get('http://localhost:3000/todos');
+    return this.http.get(`${environment.BACKEND_URL}/todos`);
   }
 
   getTodoById(id: number): Observable<any> {
-    return this.http.get(`http://localhost:3000/todos/${id}`);
+    return this.http.get(`${environment.BACKEND_URL}/todos/${id}`);
   }
 
   createTodo(todo: AddressType): Observable<any> {
-    return this.http.post('http://localhost:3000/todo', {
+    return this.http.post(`${environment.BACKEND_URL}/todo`, {
       title: todo.title,
     });
   }
 
   editTodo(todo: AddressType): Observable<any> {
-    return this.http.put(`http://localhost:3000/todo/${todo.id}`, {
+    return this.http.put(`${environment.BACKEND_URL}/todo/${todo.id}`, {
       title: todo.title,
     });
   }
 
   removeTodo(id: number): Observable<any> {
-    return this.http.delete(`http://localhost:3000/todo/${id}`);
+    return this.http.delete(`${environment.BACKEND_URL}/todo/${id}`);
   }
 }
