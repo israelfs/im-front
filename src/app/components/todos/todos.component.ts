@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { AdressService } from '../../services/adress.service';
 import { PhotonKomootService } from '../../services/photon-komoot.service';
 import { Subscription } from 'rxjs';
+import { colors } from '../../shared/colors';
 
 export type AddressType = {
   id: number;
@@ -24,6 +25,8 @@ export type AddressType = {
 export class TodosComponent implements OnDestroy {
   address: AddressType[] = [];
 
+  addressColors: string[] = [];
+
   private subscriptions: Subscription[] = [];
 
   inputTitle = '';
@@ -37,6 +40,9 @@ export class TodosComponent implements OnDestroy {
   ngOnInit() {
     this.addressService.adresses$.subscribe((addresses) => {
       this.address = addresses;
+      this.addressColors = this.address.map(
+        (address) => colors[Math.abs(address.id) % colors.length]
+      );
     });
   }
   addAddress() {

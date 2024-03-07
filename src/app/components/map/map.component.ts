@@ -108,8 +108,9 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       paint: {
         'line-color': '#FF0000',
-        'line-width': 5,
-        'line-opacity': 0.5,
+        'line-width': 4,
+        'line-opacity': 0.75,
+        'line-blur': 0.6,
       },
     });
   }

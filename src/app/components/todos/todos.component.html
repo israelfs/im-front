@@ -30,13 +30,26 @@
     [class.pr-3]="address.length > 4"
   >
     <div
-      *ngFor="let todo of address"
+      *ngFor="let todo of address; let i = index"
       class="flex justify-between items-center bg-white shadow-lg rounded-lg mb-5 p-3 w-full"
     >
       <div class="flex flex-col space-y-1 min-w-0">
-        <div class="text-gray-800 text-lg w-full truncate">
-          {{ todo.title }}
+        <div class="flex items-center">
+          <div class="text-gray-800 text-lg max-w-[80%] truncate">
+            {{ todo.title }}
+          </div>
+          <svg
+            class="ml-2 h-5 w-5"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+          >
+            <path
+              [attr.fill]="addressColors[i]"
+              d="M12 2C8.13401 2 5 5.13401 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13401 15.866 2 12 2ZM12 11C10.3431 11 9 9.65685 9 8C9 6.34315 10.3431 5 12 5C13.6569 5 15 6.34315 15 8C15 9.65685 13.6569 11 12 11Z"
+            />
+          </svg>
         </div>
+
         <div class="text-gray-400 text-sm w-full truncate">
           {{ todo.address }}
         </div>
