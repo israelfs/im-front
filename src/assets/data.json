@@ -4,7 +4,7 @@
   "name": "Streets",
   "sources": {
     "openmaptiles": {
-      "url": "https://api.maptiler.com/tiles/v3/tiles.json?key=nQRKKp2gwKsJ368E7KAJ",
+      "url": "https://api.maptiler.com/tiles/v3/tiles.json?key=rd6QhoFuSZZMGDH4E0Th",
       "type": "vector"
     },
     "maptiler_attribution": {
