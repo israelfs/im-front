@@ -60,26 +60,16 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngAfterViewInit() {
     const initialState = {
-      lng: -48.85326977116436,
-      lat: -26.30014974440676,
-      zoom: 12,
+      lng: -48.8,
+      lat: -26.3,
+      zoom: 10,
     };
 
     this.map = new Map({
       container: this.mapContainer.nativeElement,
       center: [initialState.lng, initialState.lat],
       zoom: initialState.zoom,
-      // MAPTILER
-      // style: mapStyles[this.currentStyle], // this is to work with maptiler with ready to use styler
-      // style: 'assets/maptiler-style.json', // this is to work with maptiler but with custom style (json file)
-
-      // TILESERVER-GL (LOCALLY)
-      style: 'http://localhost:8080/styles/basic-preview/style.json', // this is to work with tileserver LOCALLY with ready to use style
-      // style: 'assets/tileserver-style.json', // this is to work with tileserver LOCALLY with custom style (json file)
-
-      // FREE RASTER TILES
-      // style: osmStyle as any, // this is to work with openStreetMap directly
-      // style: wikimediaStyle as any, // this is to work with wikimedia directly
+      style: mapStyles[this.currentStyle],
     });
   }
 
@@ -90,9 +80,9 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onChangeStyle() {
-    // this.currentStyle = (this.currentStyle + 1) % mapStyles.length;
-    // this.map?.setStyle(mapStyles[this.currentStyle]);
-    // this.updateRoute();
+    this.currentStyle = (this.currentStyle + 1) % mapStyles.length;
+    this.map?.setStyle(mapStyles[this.currentStyle]);
+    this.updateRoute();
   }
 
   updateGeoJsonLine(data?: any) {

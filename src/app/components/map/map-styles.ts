@@ -1,14 +1,11 @@
-import { environment } from '../../../environments/environment.development';
-
+// TILESERVER-GL (LOCALLY)
 export const mapStyles = [
-  `https://api.maptiler.com/maps/streets/style.json?key=${environment.MAPTILER_KEY}`,
-  `https://api.maptiler.com/maps/bright-v2/style.json?key=${environment.MAPTILER_KEY}`,
-  `https://api.maptiler.com/maps/basic-v2/style.json?key=${environment.MAPTILER_KEY}`,
-  `https://api.maptiler.com/maps/openstreetmap/style.json?key=${environment.MAPTILER_KEY}`,
+  'http://localhost:8080/styles/street/style.json',
+  'http://localhost:8080/styles/basic/style.json',
+  'http://localhost:8080/styles/bright/style.json',
 ];
 
 export const osmStyle = {
-  // OSM ja usado hoje no editor
   version: 8,
   sources: {
     osm: {
@@ -23,7 +20,7 @@ export const osmStyle = {
     {
       id: 'osm',
       type: 'raster',
-      source: 'osm', // This must match the source key above
+      source: 'osm',
     },
   ],
 };
