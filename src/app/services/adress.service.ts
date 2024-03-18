@@ -7,6 +7,7 @@ import {
   map,
   switchMap,
   tap,
+  of,
 } from 'rxjs';
 import { AddressType } from '../components/todos/todos.component';
 import { environment } from '../../environments/environment.development';
@@ -25,39 +26,37 @@ export class AdressService {
     private photonService: PhotonKomootService
   ) {}
 
-  private ws!: WebSocket;
+  // private ws!: WebSocket;
 
   openWebSocket() {
-    this.ws = new WebSocket(environment.WEBSOCKET_URL);
-
-    this.ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
-    this.ws.onmessage = (event) => {
-      console.log(event.data);
-      if (event.data === 'Refetch Data') {
-        this.getTodos().subscribe(
-          // Refetch data
-          (data) => {
-            this.setAddresses(data);
-          },
-          (error) => {
-            console.error('Error:', error);
-          }
-        );
-      }
-    };
+    // this.ws = new WebSocket(environment.WEBSOCKET_URL);
+    // this.ws.onerror = (error) => {
+    //   console.error('WebSocket error:', error);
+    // };
+    // this.ws.onmessage = (event) => {
+    //   console.log(event.data);
+    //   if (event.data === 'Refetch Data') {
+    //     this.getTodos().subscribe(
+    //       // Refetch data
+    //       (data) => {
+    //         this.setAddresses(data);
+    //       },
+    //       (error) => {
+    //         console.error('Error:', error);
+    //       }
+    //     );
+    //   }
+    // };
   }
 
   closeWebSocket() {
-    if (this.ws) {
-      this.ws.close();
-    }
+    // if (this.ws) {
+    //   this.ws.close();
+    // }
   }
 
   notifyServerOfChange() {
-    this.ws.send('Refetch Data');
+    // this.ws.send('Refetch Data');
   }
 
   addAddress(address: AddressType): void {
@@ -144,30 +143,18 @@ export class AdressService {
   }
 
   getTodos(): Observable<any> {
-    return this.http.get(`${environment.BACKEND_URL}/todos`);
-  }
-
-  getTodoById(id: number): Observable<any> {
-    return this.http.get(`${environment.BACKEND_URL}/todos/${id}`);
+    return of([]);
   }
 
   createTodo(todo: AddressType): Observable<any> {
-    return this.http.post(`${environment.BACKEND_URL}/todo`, {
-      title: todo.title,
-      lat: todo.lat,
-      lng: todo.lng,
-    });
+    return of(todo);
   }
 
   editTodo(todo: AddressType): Observable<any> {
-    return this.http.put(`${environment.BACKEND_URL}/todo/${todo.id}`, {
-      title: todo.title,
-      lat: todo.lat,
-      lng: todo.lng,
-    });
+    return of(todo);
   }
 
   removeTodo(id: number): Observable<any> {
-    return this.http.delete(`${environment.BACKEND_URL}/todo/${id}`);
+    return of(id);
   }
 }

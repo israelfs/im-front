@@ -69,7 +69,8 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
       container: this.mapContainer.nativeElement,
       center: [initialState.lng, initialState.lat],
       zoom: initialState.zoom,
-      style: mapStyles[this.currentStyle],
+      style: '/assets/data.json',
+      // style: 'http://localhost:8080/styles/street/style.json'
     });
   }
 
