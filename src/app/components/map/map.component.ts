@@ -40,7 +40,7 @@ type gtfsType = {
   styleUrls: ['./map.component.css'],
   imports: [SharedComponentsModule],
 })
-export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
+export class MapComponent implements OnInit, OnDestroy {
   map: Map | undefined;
   private subscriptions: Subscription[] = [];
   markers: Marker[] = [];
@@ -67,6 +67,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
           properties: {
             id: index,
             signal: parseFloat(d.gsm_signal),
+            // signal: new Date(d.time_transmit).getTime() - new Date(d.time_rtc).getTime(),
             time: new Date(d.time_gps).getTime(),
           },
           geometry: {
@@ -75,98 +76,128 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
           },
         };
       });
+
+      this.initializeMap();
     });
     this.subscriptions.push(sub);
     this.adressService.fetchAddresses();
   }
 
-  ngAfterViewInit() {
+  ngAfterViewInit(): void {
     const initialState = {
       lng: -48.8,
       lat: -26.3,
       zoom: 10,
     };
-
     this.map = new Map({
       container: this.mapContainer.nativeElement,
       center: [initialState.lng, initialState.lat],
       zoom: initialState.zoom,
       style: mapTilerStyles[this.currentStyle],
     });
+  }
 
-    this.map.on('load', () => {
-      if (this.map) {
-        this.map.addSource('location', {
-          type: 'geojson',
-          data: {
-            type: 'FeatureCollection',
-            features: this.locationData,
-          },
-        });
+  initializeMap() {
+    if (this.map) {
+      this.map.addSource('location', {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: this.locationData,
+        },
+      });
 
-        this.map.addLayer({
-          id: 'location-heat',
-          type: 'heatmap',
-          source: 'location',
-          maxzoom: 18,
-          paint: {
-            // Increase the heatmap color weight weight by zoom level
-            'heatmap-intensity': [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              1,
-              0,
-              16,
-              3,
-            ],
+      this.map.addLayer({
+        id: 'location-circle',
+        type: 'circle',
+        source: 'location',
+        paint: {
+          'circle-radius': 10,
+          'circle-color': [
+            'interpolate',
+            ['linear'],
+            ['get', 'signal'],
+            0,
+            'rgb(255, 0, 0)',
+            15,
+            'rgb(255, 255, 102)',
+            25,
+            'rgb(144, 238, 144)',
+            30,
+            'rgb(0, 128, 0)',
+          ],
+          'circle-opacity': 0.5,
+        },
+      });
 
-            // Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
-            'heatmap-color': [
-              'interpolate',
-              ['linear'],
-              ['heatmap-density'],
-              0,
-              'rgba(33,102,172,0)',
-              0.2,
-              'rgb(103,169,207)',
-              0.5,
-              'rgb(209,229,240)',
-              0.8,
-              'rgb(253,219,199)',
-              0.9,
-              'rgb(239,138,98)',
-              1,
-              'rgb(178,24,43)',
-            ],
+      // 3 HEATMAPS
+      // this.map.addLayer({
+      //   id: 'weak-heatmap',
+      //   type: 'heatmap',
+      //   source: 'location',
+      //   filter: ['<=', ['get', 'signal'], 12],
+      //   paint: {
+      //     'heatmap-color': [
+      //       'interpolate',
+      //       ['linear'],
+      //       ['heatmap-density'],
+      //       0,
+      //       'rgba(255, 0, 0, 0)',
+      //       1,
+      //       'rgba(255, 0, 0, 1)',
+      //     ],
+      //     'heatmap-intensity': 1,
+      //     'heatmap-radius': 15,
+      //     'heatmap-opacity': 0.6,
+      //   },
+      // });
 
-            // Adjust the heatmap radius by zoom level
-            'heatmap-radius': [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              0,
-              0,
-              12,
-              3,
-              15,
-              8,
-            ],
+      // this.map.addLayer({
+      //   id: 'medium-heatmap',
+      //   type: 'heatmap',
+      //   source: 'location',
+      //   filter: [
+      //     'all',
+      //     ['>', ['get', 'signal'], 12],
+      //     ['<=', ['get', 'signal'], 25],
+      //   ],
+      //   paint: {
+      //     'heatmap-color': [
+      //       'interpolate',
+      //       ['linear'],
+      //       ['heatmap-density'],
+      //       0,
+      //       'rgba(255, 255, 0, 0)',
+      //       1,
+      //       'rgba(255, 255, 0, 1)',
+      //     ],
+      //     'heatmap-intensity': 1,
+      //     'heatmap-radius': 15,
+      //     'heatmap-opacity': 0.6,
+      //   },
+      // });
 
-            // Transition from heatmap to circle layer by zoom level
-            'heatmap-opacity': [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              12,
-              1,
-              15,
-              0.7,
-            ],
-          },
-        });
-      }
-    });
+      // this.map.addLayer({
+      //   id: 'strong-heatmap',
+      //   type: 'heatmap',
+      //   source: 'location',
+      //   filter: ['>', ['get', 'signal'], 25],
+      //   paint: {
+      //     'heatmap-color': [
+      //       'interpolate',
+      //       ['linear'],
+      //       ['heatmap-density'],
+      //       0,
+      //       'rgba(0, 255, 0, 0)',
+      //       1,
+      //       'rgba(0, 255, 0, 1)',
+      //     ],
+      //     'heatmap-intensity': 1,
+      //     'heatmap-radius': 15,
+      //     'heatmap-opacity': 0.6,
+      //   },
+      // });
+    }
   }
 
   ngOnDestroy() {
