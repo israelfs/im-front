@@ -1,8 +1,18 @@
+import { environment } from '../../../environments/environment.development';
+
 // TILESERVER-GL (LOCALLY)
 export const mapStyles = [
   'http://localhost:8080/styles/street/style.json',
   'http://localhost:8080/styles/basic/style.json',
   'http://localhost:8080/styles/bright/style.json',
+];
+
+export const mapTilerStyles = [
+  `https://api.maptiler.com/maps/basic-v2-dark/style.json?key=${environment.MAPTILER_KEY}`,
+  `https://api.maptiler.com/maps/streets/style.json?key=${environment.MAPTILER_KEY}`,
+  `https://api.maptiler.com/maps/bright-v2/style.json?key=${environment.MAPTILER_KEY}`,
+  `https://api.maptiler.com/maps/basic-v2/style.json?key=${environment.MAPTILER_KEY}`,
+  `https://api.maptiler.com/maps/openstreetmap/style.json?key=${environment.MAPTILER_KEY}`,
 ];
 
 export const osmStyle = {

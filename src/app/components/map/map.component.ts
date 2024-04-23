@@ -11,10 +11,27 @@ import { PhotonKomootService } from '../../services/photon-komoot.service';
 import { SharedComponentsModule } from '../../shared/shared-components.module';
 import { AdressService } from '../../services/adress.service';
 import { Subscription } from 'rxjs';
-import { AddressType } from '../todos/todos.component';
 import { OsrmService } from '../../services/osrm.service';
 import { colors } from '../../shared/colors';
-import { mapStyles, osmStyle, wikimediaStyle } from './map-styles';
+import * as d3 from 'd3';
+import {
+  mapStyles,
+  mapTilerStyles,
+  osmStyle,
+  wikimediaStyle,
+} from './map-styles';
+
+type gtfsType = {
+  gsm_signal: number;
+  heading: number;
+  idposition: string;
+  idvehicle: number;
+  latitude: number;
+  longitude: number;
+  time_gps: string;
+  time_rtc: string;
+  time_transmit: string;
+};
 
 @Component({
   selector: 'app-map',
@@ -33,30 +50,16 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private currentStyle = 0;
 
+  private csvDataPath = 'assets/estudos.csv';
+  private locationData: any[] = [];
+
   constructor(
     private photonService: PhotonKomootService,
     private adressService: AdressService,
     private osrmService: OsrmService
   ) {}
 
-  ngOnInit(): void {
-    this.adressService.openWebSocket();
-    this.subscriptions.push(
-      this.adressService.getTodos().subscribe(
-        (data: AddressType[]) => {
-          this.adressService.setAddresses(data);
-        },
-        (error) => {
-          console.error('Error:', error);
-        }
-      )
-    );
-    this.subscriptions.push(
-      this.adressService.adresses$.subscribe((addresses) => {
-        this.updateMarkers(addresses);
-      })
-    );
-  }
+  ngOnInit(): void {}
 
   ngAfterViewInit() {
     const initialState = {
@@ -69,21 +72,109 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
       container: this.mapContainer.nativeElement,
       center: [initialState.lng, initialState.lat],
       zoom: initialState.zoom,
-      // style: '/assets/data.json',
-      style: 'http://localhost:8080/styles/street/style.json', // Tileserver URL
+      style: mapTilerStyles[this.currentStyle],
+    });
+
+    d3.csv(this.csvDataPath).then((data) => {
+      data.forEach((d: any, index) => {
+        this.locationData.push({
+          type: 'Feature',
+          properties: {
+            id: index,
+            signal: parseFloat(d.gsm_signal),
+            time: new Date(d.time_gps).getTime(),
+          },
+          geometry: {
+            type: 'Point',
+            coordinates: [parseFloat(d.longitude), parseFloat(d.latitude)],
+          },
+        });
+      });
+    });
+
+    this.map.on('load', () => {
+      if (this.map) {
+        this.map.addSource('location', {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: this.locationData,
+          },
+        });
+
+        this.map.addLayer({
+          id: 'location-heat',
+          type: 'heatmap',
+          source: 'location',
+          maxzoom: 18,
+          paint: {
+            // Increase the heatmap color weight weight by zoom level
+            'heatmap-intensity': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              1,
+              0,
+              16,
+              3,
+            ],
+
+            // Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
+            'heatmap-color': [
+              'interpolate',
+              ['linear'],
+              ['heatmap-density'],
+              0,
+              'rgba(33,102,172,0)',
+              0.2,
+              'rgb(103,169,207)',
+              0.5,
+              'rgb(209,229,240)',
+              0.8,
+              'rgb(253,219,199)',
+              0.9,
+              'rgb(239,138,98)',
+              1,
+              'rgb(178,24,43)',
+            ],
+
+            // Adjust the heatmap radius by zoom level
+            'heatmap-radius': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              0,
+              0,
+              12,
+              3,
+              15,
+              8,
+            ],
+
+            // Transition from heatmap to circle layer by zoom level
+            'heatmap-opacity': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              12,
+              1,
+              15,
+              0.7,
+            ],
+          },
+        });
+      }
     });
   }
 
   ngOnDestroy() {
-    this.adressService.closeWebSocket();
     this.subscriptions.forEach((subscription) => subscription.unsubscribe());
     this.map?.remove();
   }
 
   onChangeStyle() {
-    this.currentStyle = (this.currentStyle + 1) % mapStyles.length;
-    this.map?.setStyle(mapStyles[this.currentStyle]);
-    this.updateRoute();
+    this.currentStyle = (this.currentStyle + 1) % mapTilerStyles.length;
+    this.map?.setStyle(mapTilerStyles[this.currentStyle]);
   }
 
   updateGeoJsonLine(data?: any) {
@@ -110,118 +201,6 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
         'line-opacity': 0.75,
         'line-blur': 0.6,
       },
-    });
-  }
-
-  async updateMarkers(addresses: AddressType[]) {
-    this.markers.forEach((marker) => {
-      marker.remove();
-    });
-    this.markers = [];
-
-    await Promise.all(
-      addresses.map((address, index) => this.generateMarker(address))
-    );
-
-    this.updateRoute();
-  }
-
-  updateRoute() {
-    if (!this.map) {
-      return;
-    }
-
-    if (this.map.getLayer('route')) {
-      this.map.removeLayer('route');
-      this.map.removeSource('route');
-    }
-
-    const coordinates = this.markers.map((marker) =>
-      marker.getLngLat().toArray()
-    );
-
-    if (coordinates.length > 1) {
-      this.subscriptions.push(
-        this.osrmService.getRouting(coordinates).subscribe(
-          (data) => {
-            this.updateGeoJsonLine(data);
-          },
-          (error) => {
-            console.error('Error:', error);
-          }
-        )
-      );
-    }
-  }
-
-  generateMarker(address: AddressType): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const { lat, lng, id } = address;
-
-      if (this.map) {
-        const popup = new maplibregl.Popup({ offset: 25 });
-
-        this.subscriptions.push(
-          this.photonService.getGeoCoding(lat!, lng!).subscribe((data) => {
-            if (data.features && data.features.length > 0) {
-              const newText = this.photonService.getFormatedString(data);
-              popup.setHTML(
-                `<div class="text-xs text-gray-700">
-                  ${newText}
-                </div>`
-              );
-            }
-          })
-        );
-
-        const marker = new maplibregl.Marker({
-          color: colors[Math.abs(id) % colors.length],
-          draggable: true,
-        })
-          .setLngLat([lng!, lat!])
-          .setPopup(popup)
-          .addTo(this.map)
-          .on('dragend', () => {
-            const newCoordinates = marker.getLngLat();
-            this.subscriptions.push(
-              this.photonService
-                .getGeoCoding(newCoordinates.lat, newCoordinates.lng)
-                .subscribe(
-                  (newData) => {
-                    const hasFeatures =
-                      newData.features && newData.features.length > 0;
-                    const newText = hasFeatures
-                      ? this.photonService.getFormatedString(newData)
-                      : 'No address found.';
-
-                    const newAddress = {
-                      ...address,
-                      address: newText,
-                      lat: newCoordinates.lat,
-                      lng: newCoordinates.lng,
-                    };
-
-                    popup.setText(newText);
-
-                    if (newAddress.id < 0) {
-                      this.adressService.addAddress(newAddress);
-                    } else {
-                      this.adressService.editAddress(newAddress);
-                    }
-                  },
-                  (error) => {
-                    console.error('Error:', error);
-                  }
-                )
-            );
-          });
-
-        this.markers.push(marker);
-        resolve();
-      } else {
-        console.log('No map instance found.');
-        reject(new Error('No map instance found.'));
-      }
     });
   }
 }
