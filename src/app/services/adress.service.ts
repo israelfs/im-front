@@ -20,4 +20,18 @@ export class AdressService {
     private http: HttpClient,
     private photonService: PhotonKomootService
   ) {}
+
+  private addressesSubject = new BehaviorSubject<any[]>([]);
+
+  addresses$ = this.addressesSubject.asObservable();
+
+  fetchAddresses(): void {
+    this.getLocations().subscribe((locations) => {
+      this.addressesSubject.next(locations);
+    });
+  }
+
+  getLocations(): Observable<any> {
+    return this.http.get(`${environment.BACKEND_URL}/locations`);
+  }
 }

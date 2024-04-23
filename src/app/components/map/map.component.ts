@@ -13,7 +13,7 @@ import { AdressService } from '../../services/adress.service';
 import { Subscription } from 'rxjs';
 import { OsrmService } from '../../services/osrm.service';
 import { colors } from '../../shared/colors';
-import * as d3 from 'd3';
+
 import {
   mapStyles,
   mapTilerStyles,
@@ -49,8 +49,6 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   private mapContainer!: ElementRef<HTMLElement>;
 
   private currentStyle = 0;
-
-  private csvDataPath = 'assets/estudos.csv';
   private locationData: any[] = [];
 
   constructor(
@@ -59,7 +57,28 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     private osrmService: OsrmService
   ) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    const sub = this.adressService.addresses$.subscribe((addresses) => {
+      // this.locationData = addresses;
+
+      this.locationData = addresses.map((d: any, index) => {
+        return {
+          type: 'Feature',
+          properties: {
+            id: index,
+            signal: parseFloat(d.gsm_signal),
+            time: new Date(d.time_gps).getTime(),
+          },
+          geometry: {
+            type: 'Point',
+            coordinates: [parseFloat(d.longitude), parseFloat(d.latitude)],
+          },
+        };
+      });
+    });
+    this.subscriptions.push(sub);
+    this.adressService.fetchAddresses();
+  }
 
   ngAfterViewInit() {
     const initialState = {
@@ -73,23 +92,6 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
       center: [initialState.lng, initialState.lat],
       zoom: initialState.zoom,
       style: mapTilerStyles[this.currentStyle],
-    });
-
-    d3.csv(this.csvDataPath).then((data) => {
-      data.forEach((d: any, index) => {
-        this.locationData.push({
-          type: 'Feature',
-          properties: {
-            id: index,
-            signal: parseFloat(d.gsm_signal),
-            time: new Date(d.time_gps).getTime(),
-          },
-          geometry: {
-            type: 'Point',
-            coordinates: [parseFloat(d.longitude), parseFloat(d.latitude)],
-          },
-        });
-      });
     });
 
     this.map.on('load', () => {
@@ -175,32 +177,5 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   onChangeStyle() {
     this.currentStyle = (this.currentStyle + 1) % mapTilerStyles.length;
     this.map?.setStyle(mapTilerStyles[this.currentStyle]);
-  }
-
-  updateGeoJsonLine(data?: any) {
-    const geoJson = {
-      type: 'Feature',
-      properties: {},
-      geometry: data?.routes[0].geometry,
-    };
-    this.map!.addSource('route', {
-      type: 'geojson',
-      data: geoJson as any,
-    });
-    this.map!.addLayer({
-      id: 'route',
-      type: 'line',
-      source: 'route',
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round',
-      },
-      paint: {
-        'line-color': '#FF0000',
-        'line-width': 4,
-        'line-opacity': 0.75,
-        'line-blur': 0.6,
-      },
-    });
   }
 }
