@@ -10,9 +10,10 @@ import maplibregl, { Map, Marker } from 'maplibre-gl';
 import { PhotonKomootService } from '../../services/photon-komoot.service';
 import { SharedComponentsModule } from '../../shared/shared-components.module';
 import { AdressService } from '../../services/adress.service';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription, finalize } from 'rxjs';
 import { OsrmService } from '../../services/osrm.service';
 import { colors } from '../../shared/colors';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import {
   mapStyles,
@@ -20,6 +21,8 @@ import {
   osmStyle,
   wikimediaStyle,
 } from './map-styles';
+import { AsyncPipe, NgIf, NgTemplateOutlet } from '@angular/common';
+import { LoadingService } from '../../services/loading.service';
 
 type gtfsType = {
   gsm_signal: number;
@@ -38,7 +41,13 @@ type gtfsType = {
   standalone: true,
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.css'],
-  imports: [SharedComponentsModule],
+  imports: [
+    SharedComponentsModule,
+    MatProgressSpinnerModule,
+    AsyncPipe,
+    NgIf,
+    NgTemplateOutlet,
+  ],
 })
 export class MapComponent implements OnInit, OnDestroy {
   map: Map | undefined;
@@ -51,16 +60,21 @@ export class MapComponent implements OnInit, OnDestroy {
   private currentStyle = 0;
   private locationData: any[] = [];
 
+  loading$: Observable<boolean>;
+
   constructor(
     private photonService: PhotonKomootService,
     private adressService: AdressService,
-    private osrmService: OsrmService
-  ) {}
+    private osrmService: OsrmService,
+    private loadingService: LoadingService
+  ) {
+    this.loading$ = this.loadingService.loading$;
+  }
 
   ngOnInit(): void {
-    const sub = this.adressService.addresses$.subscribe((addresses) => {
-      // this.locationData = addresses;
+    this.loadingService.loadingOn();
 
+    const sub = this.adressService.addresses$.subscribe((addresses) => {
       this.locationData = addresses.map((d: any, index) => {
         return {
           type: 'Feature',
@@ -97,16 +111,8 @@ export class MapComponent implements OnInit, OnDestroy {
     });
   }
 
-  initializeMap() {
+  useCircleLayer() {
     if (this.map) {
-      this.map.addSource('location', {
-        type: 'geojson',
-        data: {
-          type: 'FeatureCollection',
-          features: this.locationData,
-        },
-      });
-
       this.map.addLayer({
         id: 'location-circle',
         type: 'circle',
@@ -121,82 +127,100 @@ export class MapComponent implements OnInit, OnDestroy {
             'rgb(255, 0, 0)',
             15,
             'rgb(255, 255, 102)',
-            25,
+            22,
             'rgb(144, 238, 144)',
-            30,
+            27,
             'rgb(0, 128, 0)',
           ],
           'circle-opacity': 0.5,
         },
       });
+    }
+  }
 
-      // 3 HEATMAPS
-      // this.map.addLayer({
-      //   id: 'weak-heatmap',
-      //   type: 'heatmap',
-      //   source: 'location',
-      //   filter: ['<=', ['get', 'signal'], 12],
-      //   paint: {
-      //     'heatmap-color': [
-      //       'interpolate',
-      //       ['linear'],
-      //       ['heatmap-density'],
-      //       0,
-      //       'rgba(255, 0, 0, 0)',
-      //       1,
-      //       'rgba(255, 0, 0, 1)',
-      //     ],
-      //     'heatmap-intensity': 1,
-      //     'heatmap-radius': 15,
-      //     'heatmap-opacity': 0.6,
-      //   },
-      // });
+  useHeatmapLayer() {
+    if (this.map) {
+      this.map.addLayer({
+        id: 'weak-heatmap',
+        type: 'heatmap',
+        source: 'location',
+        filter: ['<=', ['get', 'signal'], 10],
+        paint: {
+          'heatmap-color': [
+            'interpolate',
+            ['linear'],
+            ['heatmap-density'],
+            0,
+            'rgba(255, 0, 0, 0)',
+            1,
+            'rgba(255, 0, 0, 1)',
+          ],
+          'heatmap-intensity': 1,
+          'heatmap-radius': 15,
+          'heatmap-opacity': 0.6,
+        },
+      });
 
-      // this.map.addLayer({
-      //   id: 'medium-heatmap',
-      //   type: 'heatmap',
-      //   source: 'location',
-      //   filter: [
-      //     'all',
-      //     ['>', ['get', 'signal'], 12],
-      //     ['<=', ['get', 'signal'], 25],
-      //   ],
-      //   paint: {
-      //     'heatmap-color': [
-      //       'interpolate',
-      //       ['linear'],
-      //       ['heatmap-density'],
-      //       0,
-      //       'rgba(255, 255, 0, 0)',
-      //       1,
-      //       'rgba(255, 255, 0, 1)',
-      //     ],
-      //     'heatmap-intensity': 1,
-      //     'heatmap-radius': 15,
-      //     'heatmap-opacity': 0.6,
-      //   },
-      // });
+      this.map.addLayer({
+        id: 'medium-heatmap',
+        type: 'heatmap',
+        source: 'location',
+        filter: [
+          'all',
+          ['>', ['get', 'signal'], 10],
+          ['<=', ['get', 'signal'], 20],
+        ],
+        paint: {
+          'heatmap-color': [
+            'interpolate',
+            ['linear'],
+            ['heatmap-density'],
+            0,
+            'rgba(255, 255, 0, 0)',
+            1,
+            'rgba(255, 255, 0, 1)',
+          ],
+          'heatmap-intensity': 1,
+          'heatmap-radius': 15,
+          'heatmap-opacity': 0.6,
+        },
+      });
 
-      // this.map.addLayer({
-      //   id: 'strong-heatmap',
-      //   type: 'heatmap',
-      //   source: 'location',
-      //   filter: ['>', ['get', 'signal'], 25],
-      //   paint: {
-      //     'heatmap-color': [
-      //       'interpolate',
-      //       ['linear'],
-      //       ['heatmap-density'],
-      //       0,
-      //       'rgba(0, 255, 0, 0)',
-      //       1,
-      //       'rgba(0, 255, 0, 1)',
-      //     ],
-      //     'heatmap-intensity': 1,
-      //     'heatmap-radius': 15,
-      //     'heatmap-opacity': 0.6,
-      //   },
-      // });
+      this.map.addLayer({
+        id: 'strong-heatmap',
+        type: 'heatmap',
+        source: 'location',
+        filter: ['>', ['get', 'signal'], 20],
+        paint: {
+          'heatmap-color': [
+            'interpolate',
+            ['linear'],
+            ['heatmap-density'],
+            0,
+            'rgba(0, 255, 0, 0)',
+            1,
+            'rgba(0, 255, 0, 1)',
+          ],
+          'heatmap-intensity': 1,
+          'heatmap-radius': 15,
+          'heatmap-opacity': 0.6,
+        },
+      });
+    }
+  }
+
+  initializeMap() {
+    if (this.map) {
+      this.map.addSource('location', {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: this.locationData,
+        },
+      });
+
+      this.useHeatmapLayer();
+      this.loadingService.loadingOff();
     }
   }
 
@@ -208,5 +232,17 @@ export class MapComponent implements OnInit, OnDestroy {
   onChangeStyle() {
     this.currentStyle = (this.currentStyle + 1) % mapTilerStyles.length;
     this.map?.setStyle(mapTilerStyles[this.currentStyle]);
+  }
+
+  onManageFilters() {
+    try {
+      this.loadingService.loadingOn();
+
+      // load courses from backend
+    } catch (error) {
+      // handle error message
+    } finally {
+      this.loadingService.loadingOff();
+    }
   }
 }

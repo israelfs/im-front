@@ -34,4 +34,16 @@ export class AdressService {
   getLocations(): Observable<any> {
     return this.http.get(`${environment.BACKEND_URL}/locations`);
   }
+
+  getMonoOperatorLocations = (): Observable<any> => {
+    return this.http.get(`${environment.BACKEND_URL}/monoOperatorLocations`);
+  };
+
+  getBiOperatorLocations = (): Observable<any> => {
+    return this.http.get(`${environment.BACKEND_URL}/biOperatorLocations`);
+  };
+
+  getTripleOperatorLocations = (): Observable<any> => {
+    return this.http.get(`${environment.BACKEND_URL}/tripleOperatorLocations`);
+  };
 }

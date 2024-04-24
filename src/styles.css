@@ -4,3 +4,22 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.spinner-color circle {
+  @apply text-slate-200;
+  stroke: currentColor !important;
+}
+
+.spinner-color {
+  width: 60px !important;
+  height: 60px !important;
+}
+
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
