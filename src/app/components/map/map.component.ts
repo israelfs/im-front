@@ -14,14 +14,16 @@ import { Observable, Subscription, finalize } from 'rxjs';
 import { OsrmService } from '../../services/osrm.service';
 import { colors } from '../../shared/colors';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   mapStyles,
   mapTilerStyles,
   osmStyle,
   wikimediaStyle,
 } from './map-styles';
-import { AsyncPipe, NgIf, NgTemplateOutlet } from '@angular/common';
+import { AsyncPipe, NgClass, NgIf, NgTemplateOutlet } from '@angular/common';
 import { LoadingService } from '../../services/loading.service';
 
 type gtfsType = {
@@ -44,8 +46,12 @@ type gtfsType = {
   imports: [
     SharedComponentsModule,
     MatProgressSpinnerModule,
+    MatSidenavModule,
+    MatSelectModule,
+    MatTooltipModule,
     AsyncPipe,
     NgIf,
+    NgClass,
     NgTemplateOutlet,
   ],
 })
@@ -59,6 +65,10 @@ export class MapComponent implements OnInit, OnDestroy {
 
   private currentStyle = 0;
   private locationData: any[] = [];
+
+  displayFilterDrawer = false;
+
+  selected: 'all' | 'mono' | 'bi' | 'multi' = 'all';
 
   loading$: Observable<boolean>;
 
@@ -94,7 +104,7 @@ export class MapComponent implements OnInit, OnDestroy {
       this.initializeMap();
     });
     this.subscriptions.push(sub);
-    this.adressService.fetchAddresses();
+    this.adressService.fetchAddresses(this.selected);
   }
 
   ngAfterViewInit(): void {
@@ -211,13 +221,22 @@ export class MapComponent implements OnInit, OnDestroy {
 
   initializeMap() {
     if (this.map) {
-      this.map.addSource('location', {
-        type: 'geojson',
-        data: {
+      const source = this.map.getSource('location') as any;
+
+      if (source) {
+        source.setData({
           type: 'FeatureCollection',
           features: this.locationData,
-        },
-      });
+        });
+      } else {
+        this.map.addSource('location', {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: this.locationData,
+          },
+        });
+      }
 
       this.useHeatmapLayer();
       this.loadingService.loadingOff();
@@ -234,15 +253,28 @@ export class MapComponent implements OnInit, OnDestroy {
     this.map?.setStyle(mapTilerStyles[this.currentStyle]);
   }
 
-  onManageFilters() {
-    try {
-      this.loadingService.loadingOn();
-
-      // load courses from backend
-    } catch (error) {
-      // handle error message
-    } finally {
-      this.loadingService.loadingOff();
+  clearMapLayers() {
+    if (this.map) {
+      const layers = this.map.getStyle().layers;
+      layers.forEach((layer) => {
+        if (this.map && (layer.type === 'heatmap' || layer.type === 'circle')) {
+          this.map.removeLayer(layer.id);
+        }
+      });
     }
+  }
+
+  onManageFilters(event: any) {
+    this.selected = event.value;
+
+    this.loadingService.loadingOn();
+
+    this.clearMapLayers();
+
+    this.adressService.fetchAddresses(this.selected);
+  }
+
+  switchDisplayFilterDrawer() {
+    this.displayFilterDrawer = !this.displayFilterDrawer;
   }
 }

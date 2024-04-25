@@ -1,20 +1,34 @@
 <div class="relative w-full h-full">
-  <!-- <button
-    class="absolute top-0 right-0 m-3 z-50 text-sm font-bold bg-blue-500 hover:bg-blue-700 text-white py-2 px-2 rounded-lg transition-all duration-500 ease-in-out"
-    (click)="onChangeStyle()"
-  >
-    Switch style
-  </button> -->
   <div
-    class="absolute inset-0 z-50 flex items-center justify-center"
+    class="absolute top-0 left-0 h-full w-[30%] min-w-[366px] flex flex-col items-center justify-center overflow-auto border-r-[1px] bg-gray-500 z-40"
+    [ngClass]="{ hidden: !displayFilterDrawer }"
+  >
+    <mat-form-field class="w-3/4">
+      <mat-label>Selecione o tipo de contrato do Chip</mat-label>
+      <mat-select
+        [(value)]="selected"
+        (selectionChange)="onManageFilters($event)"
+        [disabled]="loading$ | async"
+      >
+        <mat-option value="all">Todas</mat-option>
+        <mat-option value="mono">Mono operadora</mat-option>
+        <mat-option value="bi">Bi operadora</mat-option>
+        <mat-option value="multi">Multi operadora</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div
+    class="absolute inset-0 z-30 flex items-center justify-center"
     *ngIf="loading$ | async"
   >
     <mat-spinner class="spinner-color"></mat-spinner>
   </div>
 
   <button
-    class="absolute top-0 left-0 m-3 z-50 text-sm font-bold bg-gray-500 hover:bg-gray-700 text-white py-2 px-2 rounded-full transition-all duration-500 ease-in-out"
-    (click)="onManageFilters()"
+    class="fixed top-0 left-0 m-3 z-50 text-sm font-bold bg-gray-500 hover:bg-gray-700 text-white py-2 px-2 rounded-full transition-all duration-500 ease-in-out"
+    (click)="switchDisplayFilterDrawer()"
+    [matTooltip]="displayFilterDrawer ? 'Fechar filtros' : 'Abrir filtros'"
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"

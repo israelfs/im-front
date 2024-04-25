@@ -25,8 +25,23 @@ export class AdressService {
 
   addresses$ = this.addressesSubject.asObservable();
 
-  fetchAddresses(): void {
-    this.getLocations().subscribe((locations) => {
+  fetchAddresses(type: 'all' | 'mono' | 'bi' | 'multi'): void {
+    let obs: Observable<any>;
+    switch (type) {
+      case 'all':
+        obs = this.getLocations();
+        break;
+      case 'mono':
+        obs = this.getMonoOperatorLocations();
+        break;
+      case 'bi':
+        obs = this.getBiOperatorLocations();
+        break;
+      case 'multi':
+        obs = this.getTripleOperatorLocations();
+        break;
+    }
+    obs.subscribe((locations) => {
       this.addressesSubject.next(locations);
     });
   }
