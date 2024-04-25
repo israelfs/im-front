@@ -5,6 +5,7 @@ import {
   ElementRef,
   AfterViewInit,
   OnDestroy,
+  ChangeDetectorRef,
 } from '@angular/core';
 import maplibregl, { Map, Marker } from 'maplibre-gl';
 import { PhotonKomootService } from '../../services/photon-komoot.service';
@@ -17,6 +18,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatRadioModule } from '@angular/material/radio';
+import { FormsModule } from '@angular/forms';
+
 import {
   mapStyles,
   mapTilerStyles,
@@ -25,6 +29,16 @@ import {
 } from './map-styles';
 import { AsyncPipe, NgClass, NgIf, NgTemplateOutlet } from '@angular/common';
 import { LoadingService } from '../../services/loading.service';
+import {
+  circleDelayLayer,
+  circleSignalLayer,
+  mediumHeatmapSignalLayer,
+  goodHeatmapSignalLayer,
+  badHeatmapSignalLayer,
+  badHeatmapDelayLayer,
+  mediumHeatmapDelayLayer,
+  goodHeatmapDelayLayer,
+} from './layers';
 
 type gtfsType = {
   gsm_signal: number;
@@ -49,6 +63,8 @@ type gtfsType = {
     MatSidenavModule,
     MatSelectModule,
     MatTooltipModule,
+    MatRadioModule,
+    FormsModule,
     AsyncPipe,
     NgIf,
     NgClass,
@@ -68,7 +84,14 @@ export class MapComponent implements OnInit, OnDestroy {
 
   displayFilterDrawer = false;
 
-  selected: 'all' | 'mono' | 'bi' | 'multi' = 'all';
+  selectedOpeartorType: 'all' | 'mono' | 'bi' | 'multi' = 'all';
+
+  selectedLayerType: 'heatmap' | 'circle' = 'heatmap';
+
+  selectedFilterType: 'signal' | 'delay' = 'signal';
+
+  minDelay = Infinity;
+  maxDelay = -Infinity;
 
   loading$: Observable<boolean>;
 
@@ -76,7 +99,8 @@ export class MapComponent implements OnInit, OnDestroy {
     private photonService: PhotonKomootService,
     private adressService: AdressService,
     private osrmService: OsrmService,
-    private loadingService: LoadingService
+    private loadingService: LoadingService,
+    private cdr: ChangeDetectorRef
   ) {
     this.loading$ = this.loadingService.loading$;
   }
@@ -86,12 +110,21 @@ export class MapComponent implements OnInit, OnDestroy {
 
     const sub = this.adressService.addresses$.subscribe((addresses) => {
       this.locationData = addresses.map((d: any, index) => {
+        const currentDelay = Math.log10(
+          Math.abs(
+            new Date(d.time_transmit).getTime() - new Date(d.time_rtc).getTime()
+          ) + 1
+        );
+
+        this.minDelay = Math.min(this.minDelay, currentDelay);
+        this.maxDelay = Math.max(this.maxDelay, currentDelay);
+
         return {
           type: 'Feature',
           properties: {
             id: index,
             signal: parseFloat(d.gsm_signal),
-            // signal: new Date(d.time_transmit).getTime() - new Date(d.time_rtc).getTime(),
+            timeDelay: currentDelay || 0,
             time: new Date(d.time_gps).getTime(),
           },
           geometry: {
@@ -104,7 +137,7 @@ export class MapComponent implements OnInit, OnDestroy {
       this.initializeMap();
     });
     this.subscriptions.push(sub);
-    this.adressService.fetchAddresses(this.selected);
+    this.adressService.fetchAddresses(this.selectedOpeartorType);
   }
 
   ngAfterViewInit(): void {
@@ -119,103 +152,34 @@ export class MapComponent implements OnInit, OnDestroy {
       zoom: initialState.zoom,
       style: mapTilerStyles[this.currentStyle],
     });
+    this.loading$.subscribe(() => {
+      this.cdr.detectChanges();
+    });
   }
 
   useCircleLayer() {
     if (this.map) {
-      this.map.addLayer({
-        id: 'location-circle',
-        type: 'circle',
-        source: 'location',
-        paint: {
-          'circle-radius': 10,
-          'circle-color': [
-            'interpolate',
-            ['linear'],
-            ['get', 'signal'],
-            0,
-            'rgb(255, 0, 0)',
-            15,
-            'rgb(255, 255, 102)',
-            22,
-            'rgb(144, 238, 144)',
-            27,
-            'rgb(0, 128, 0)',
-          ],
-          'circle-opacity': 0.5,
-        },
-      });
+      if (this.selectedFilterType === 'signal') {
+        this.map.addLayer(circleSignalLayer);
+      } else {
+        this.map.addLayer(circleDelayLayer(this.minDelay, this.maxDelay));
+      }
     }
   }
 
   useHeatmapLayer() {
     if (this.map) {
-      this.map.addLayer({
-        id: 'weak-heatmap',
-        type: 'heatmap',
-        source: 'location',
-        filter: ['<=', ['get', 'signal'], 10],
-        paint: {
-          'heatmap-color': [
-            'interpolate',
-            ['linear'],
-            ['heatmap-density'],
-            0,
-            'rgba(255, 0, 0, 0)',
-            1,
-            'rgba(255, 0, 0, 1)',
-          ],
-          'heatmap-intensity': 1,
-          'heatmap-radius': 15,
-          'heatmap-opacity': 0.6,
-        },
-      });
-
-      this.map.addLayer({
-        id: 'medium-heatmap',
-        type: 'heatmap',
-        source: 'location',
-        filter: [
-          'all',
-          ['>', ['get', 'signal'], 10],
-          ['<=', ['get', 'signal'], 20],
-        ],
-        paint: {
-          'heatmap-color': [
-            'interpolate',
-            ['linear'],
-            ['heatmap-density'],
-            0,
-            'rgba(255, 255, 0, 0)',
-            1,
-            'rgba(255, 255, 0, 1)',
-          ],
-          'heatmap-intensity': 1,
-          'heatmap-radius': 15,
-          'heatmap-opacity': 0.6,
-        },
-      });
-
-      this.map.addLayer({
-        id: 'strong-heatmap',
-        type: 'heatmap',
-        source: 'location',
-        filter: ['>', ['get', 'signal'], 20],
-        paint: {
-          'heatmap-color': [
-            'interpolate',
-            ['linear'],
-            ['heatmap-density'],
-            0,
-            'rgba(0, 255, 0, 0)',
-            1,
-            'rgba(0, 255, 0, 1)',
-          ],
-          'heatmap-intensity': 1,
-          'heatmap-radius': 15,
-          'heatmap-opacity': 0.6,
-        },
-      });
+      if (this.selectedFilterType === 'signal') {
+        this.map.addLayer(badHeatmapSignalLayer);
+        this.map.addLayer(mediumHeatmapSignalLayer);
+        this.map.addLayer(goodHeatmapSignalLayer);
+      } else {
+        this.map.addLayer(badHeatmapDelayLayer(this.minDelay, this.maxDelay));
+        this.map.addLayer(
+          mediumHeatmapDelayLayer(this.minDelay, this.maxDelay)
+        );
+        this.map.addLayer(goodHeatmapDelayLayer(this.minDelay, this.maxDelay));
+      }
     }
   }
 
@@ -237,8 +201,9 @@ export class MapComponent implements OnInit, OnDestroy {
           },
         });
       }
-
-      this.useHeatmapLayer();
+      this.selectedLayerType === 'circle'
+        ? this.useCircleLayer()
+        : this.useHeatmapLayer();
       this.loadingService.loadingOff();
     }
   }
@@ -265,13 +230,11 @@ export class MapComponent implements OnInit, OnDestroy {
   }
 
   onManageFilters(event: any) {
-    this.selected = event.value;
-
     this.loadingService.loadingOn();
 
     this.clearMapLayers();
 
-    this.adressService.fetchAddresses(this.selected);
+    this.adressService.fetchAddresses(this.selectedOpeartorType);
   }
 
   switchDisplayFilterDrawer() {
