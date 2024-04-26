@@ -38,6 +38,8 @@ import {
   badHeatmapDelayLayer,
   mediumHeatmapDelayLayer,
   goodHeatmapDelayLayer,
+  prettyBadHeatmapSignalLayer,
+  prettyBadHeatmapDelayLayer,
 } from './layers';
 
 type gtfsType = {
@@ -90,9 +92,6 @@ export class MapComponent implements OnInit, OnDestroy {
 
   selectedFilterType: 'signal' | 'delay' = 'signal';
 
-  minDelay = Infinity;
-  maxDelay = -Infinity;
-
   loading$: Observable<boolean>;
 
   constructor(
@@ -110,21 +109,13 @@ export class MapComponent implements OnInit, OnDestroy {
 
     const sub = this.adressService.addresses$.subscribe((addresses) => {
       this.locationData = addresses.map((d: any, index) => {
-        const currentDelay = Math.log10(
-          Math.abs(
-            new Date(d.time_transmit).getTime() - new Date(d.time_rtc).getTime()
-          ) + 1
-        );
-
-        this.minDelay = Math.min(this.minDelay, currentDelay);
-        this.maxDelay = Math.max(this.maxDelay, currentDelay);
-
+        console.log(d.transmit_delay);
         return {
           type: 'Feature',
           properties: {
             id: index,
             signal: parseFloat(d.gsm_signal),
-            timeDelay: currentDelay || 0,
+            timeDelay: parseFloat(d.transmit_delay),
             time: new Date(d.time_gps).getTime(),
           },
           geometry: {
@@ -162,7 +153,7 @@ export class MapComponent implements OnInit, OnDestroy {
       if (this.selectedFilterType === 'signal') {
         this.map.addLayer(circleSignalLayer);
       } else {
-        this.map.addLayer(circleDelayLayer(this.minDelay, this.maxDelay));
+        this.map.addLayer(circleDelayLayer);
       }
     }
   }
@@ -171,14 +162,14 @@ export class MapComponent implements OnInit, OnDestroy {
     if (this.map) {
       if (this.selectedFilterType === 'signal') {
         this.map.addLayer(badHeatmapSignalLayer);
+        this.map.addLayer(prettyBadHeatmapSignalLayer);
         this.map.addLayer(mediumHeatmapSignalLayer);
         this.map.addLayer(goodHeatmapSignalLayer);
       } else {
-        this.map.addLayer(badHeatmapDelayLayer(this.minDelay, this.maxDelay));
-        this.map.addLayer(
-          mediumHeatmapDelayLayer(this.minDelay, this.maxDelay)
-        );
-        this.map.addLayer(goodHeatmapDelayLayer(this.minDelay, this.maxDelay));
+        this.map.addLayer(goodHeatmapDelayLayer);
+        this.map.addLayer(mediumHeatmapDelayLayer);
+        this.map.addLayer(badHeatmapDelayLayer);
+        this.map.addLayer(prettyBadHeatmapDelayLayer);
       }
     }
   }
