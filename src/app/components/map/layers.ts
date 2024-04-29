@@ -61,7 +61,7 @@ export const prettyBadHeatmapSignalLayer: maplibregl.AddLayerObject = {
       'rgba(255, 0, 0, 1)',
     ],
     'heatmap-intensity': 1,
-    'heatmap-radius': 20,
+    'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 0, 22, 30],
     'heatmap-opacity': 0.8,
   },
 };
@@ -82,7 +82,7 @@ export const badHeatmapSignalLayer: maplibregl.AddLayerObject = {
       'rgba(255, 100, 100, 1)',
     ],
     'heatmap-intensity': 1,
-    'heatmap-radius': 20,
+    'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 0, 22, 30],
     'heatmap-opacity': 0.8,
   },
 };
@@ -103,7 +103,7 @@ export const mediumHeatmapSignalLayer: maplibregl.AddLayerObject = {
       'rgb(144, 238, 144)',
     ],
     'heatmap-intensity': 1,
-    'heatmap-radius': 20,
+    'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 0, 22, 30],
     'heatmap-opacity': 0.8,
   },
 };
@@ -124,7 +124,7 @@ export const goodHeatmapSignalLayer: maplibregl.AddLayerObject = {
       'rgba(0, 255, 0, 1)',
     ],
     'heatmap-intensity': 1,
-    'heatmap-radius': 20,
+    'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 0, 22, 30],
     'heatmap-opacity': 0.8,
   },
 };
@@ -150,7 +150,7 @@ export const goodHeatmapDelayLayer: maplibregl.AddLayerObject = {
       'rgba(0, 128, 0, 1)',
     ],
     'heatmap-intensity': 1,
-    'heatmap-radius': 20,
+    'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 0, 22, 30],
     'heatmap-opacity': 0.8,
   },
 };
@@ -175,7 +175,7 @@ export const mediumHeatmapDelayLayer: maplibregl.AddLayerObject = {
       'rgb(144, 238, 144)',
     ],
     'heatmap-intensity': 1,
-    'heatmap-radius': 20,
+    'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 0, 22, 30],
     'heatmap-opacity': 0.8,
   },
 };
@@ -200,7 +200,7 @@ export const badHeatmapDelayLayer: maplibregl.AddLayerObject = {
       'rgba(255, 100, 100, 1)',
     ],
     'heatmap-intensity': 1,
-    'heatmap-radius': 20,
+    'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 0, 22, 30],
     'heatmap-opacity': 0.8,
   },
 };
@@ -221,7 +221,7 @@ export const prettyBadHeatmapDelayLayer: maplibregl.AddLayerObject = {
       'rgba(255, 0, 0, 1)',
     ],
     'heatmap-intensity': 1,
-    'heatmap-radius': 20,
+    'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 0, 22, 30],
     'heatmap-opacity': 0.8,
   },
 };

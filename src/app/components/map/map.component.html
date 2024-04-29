@@ -3,6 +3,39 @@
     class="absolute top-0 left-0 h-full w-[30%] min-w-[366px] flex flex-col items-center justify-center overflow-auto border-r-[1px] bg-gray-500 z-40"
     [ngClass]="{ hidden: !displayFilterDrawer }"
   >
+    <mat-form-field class="w-3/4 mt-2">
+      <mat-label>Selecione a empresa</mat-label>
+      <mat-select
+        name="companyName"
+        [(value)]="selectedCompany"
+        (selectionChange)="onManageFilters($event)"
+        [disabled]="loading$ | async"
+        class="mt-1"
+      >
+        <mat-option *ngFor="let company of allCompanies" [value]="company.name">
+          {{ company.name }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field class="w-3/4 mt-2">
+      <mat-label>Selecione o tipo de contrato do Chip</mat-label>
+      <mat-select
+        name="operatorType"
+        [(value)]="selectedOpeartorType"
+        (selectionChange)="onManageFilters($event)"
+        [disabled]="loading$ | async"
+        class="mt-1"
+      >
+        <mat-option value="all">Todas</mat-option>
+        <mat-option value="mono">Mono operadora</mat-option>
+        <mat-option value="bi">Bi operadora</mat-option>
+        <mat-option value="multi">Multi operadora</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <div class="w-full border-t-2 border-gray-300 my-4"></div>
+
     <mat-label>Selecione o tipo de layer</mat-label>
     <mat-radio-group
       name="layerType"
@@ -26,28 +59,12 @@
       class="mt-1"
     >
       <mat-radio-button value="signal" [disabled]="loading$ | async"
-        >Sinal RTC</mat-radio-button
+        >Sinal GSM</mat-radio-button
       >
       <mat-radio-button value="delay" [disabled]="loading$ | async"
         >Atraso no envio do sinal</mat-radio-button
       >
     </mat-radio-group>
-
-    <mat-form-field class="w-3/4 mt-4">
-      <mat-label>Selecione o tipo de contrato do Chip</mat-label>
-      <mat-select
-        name="operatorType"
-        [(value)]="selectedOpeartorType"
-        (selectionChange)="onManageFilters($event)"
-        [disabled]="loading$ | async"
-        class="mt-1"
-      >
-        <mat-option value="all">Todas</mat-option>
-        <mat-option value="mono">Mono operadora</mat-option>
-        <mat-option value="bi">Bi operadora</mat-option>
-        <mat-option value="multi">Multi operadora</mat-option>
-      </mat-select>
-    </mat-form-field>
   </div>
 
   <div

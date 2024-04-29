@@ -22,23 +22,28 @@ export class AdressService {
   ) {}
 
   private addressesSubject = new BehaviorSubject<any[]>([]);
+  private companiesSubject = new BehaviorSubject<any[]>([]);
 
   addresses$ = this.addressesSubject.asObservable();
+  companies$ = this.companiesSubject.asObservable();
 
-  fetchAddresses(type: 'all' | 'mono' | 'bi' | 'multi'): void {
+  fetchAddresses(
+    type: 'all' | 'mono' | 'bi' | 'multi',
+    seletctedCompany: string
+  ): void {
     let obs: Observable<any>;
     switch (type) {
       case 'all':
-        obs = this.getLocations();
+        obs = this.getLocations(seletctedCompany);
         break;
       case 'mono':
-        obs = this.getMonoOperatorLocations();
+        obs = this.getMonoOperatorLocations(seletctedCompany);
         break;
       case 'bi':
-        obs = this.getBiOperatorLocations();
+        obs = this.getBiOperatorLocations(seletctedCompany);
         break;
       case 'multi':
-        obs = this.getTripleOperatorLocations();
+        obs = this.getTripleOperatorLocations(seletctedCompany);
         break;
     }
     obs.subscribe((locations) => {
@@ -46,19 +51,37 @@ export class AdressService {
     });
   }
 
-  getLocations(): Observable<any> {
-    return this.http.get(`${environment.BACKEND_URL}/locations`);
+  fetchCompanies(): void {
+    this.getCompanies().subscribe((companies) => {
+      this.companiesSubject.next(companies);
+    });
   }
 
-  getMonoOperatorLocations = (): Observable<any> => {
-    return this.http.get(`${environment.BACKEND_URL}/monoOperatorLocations`);
-  };
+  getCompanies(): Observable<any> {
+    return this.http.get(`${environment.BACKEND_URL}/getAllCompanies`);
+  }
 
-  getBiOperatorLocations = (): Observable<any> => {
-    return this.http.get(`${environment.BACKEND_URL}/biOperatorLocations`);
-  };
+  getLocations(selectedCompany: string): Observable<any> {
+    return this.http.get(`${environment.BACKEND_URL}/locations`, {
+      params: { selectedCompany },
+    });
+  }
 
-  getTripleOperatorLocations = (): Observable<any> => {
-    return this.http.get(`${environment.BACKEND_URL}/tripleOperatorLocations`);
-  };
+  getMonoOperatorLocations(selectedCompany: string): Observable<any> {
+    return this.http.get(`${environment.BACKEND_URL}/monoOperatorLocations`, {
+      params: { selectedCompany },
+    });
+  }
+
+  getBiOperatorLocations(selectedCompany: string): Observable<any> {
+    return this.http.get(`${environment.BACKEND_URL}/biOperatorLocations`, {
+      params: { selectedCompany },
+    });
+  }
+
+  getTripleOperatorLocations(selectedCompany: string): Observable<any> {
+    return this.http.get(`${environment.BACKEND_URL}/tripleOperatorLocations`, {
+      params: { selectedCompany },
+    });
+  }
 }

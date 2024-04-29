@@ -14,6 +14,7 @@ import { AdressService } from '../../services/adress.service';
 import { Observable, Subscription, finalize } from 'rxjs';
 import { OsrmService } from '../../services/osrm.service';
 import { colors } from '../../shared/colors';
+import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSelectModule } from '@angular/material/select';
@@ -61,6 +62,7 @@ type gtfsType = {
   styleUrls: ['./map.component.css'],
   imports: [
     SharedComponentsModule,
+    CommonModule,
     MatProgressSpinnerModule,
     MatSidenavModule,
     MatSelectModule,
@@ -84,9 +86,17 @@ export class MapComponent implements OnInit, OnDestroy {
   private currentStyle = 0;
   private locationData: any[] = [];
 
+  allCompanies: {
+    idcompany: number;
+    name: string;
+    cnpj: string;
+  }[] = [];
+
   displayFilterDrawer = false;
 
   selectedOpeartorType: 'all' | 'mono' | 'bi' | 'multi' = 'all';
+
+  selectedCompany: string = 'Todas';
 
   selectedLayerType: 'heatmap' | 'circle' = 'heatmap';
 
@@ -109,7 +119,6 @@ export class MapComponent implements OnInit, OnDestroy {
 
     const sub = this.adressService.addresses$.subscribe((addresses) => {
       this.locationData = addresses.map((d: any, index) => {
-        console.log(d.transmit_delay);
         return {
           type: 'Feature',
           properties: {
@@ -127,8 +136,25 @@ export class MapComponent implements OnInit, OnDestroy {
 
       this.initializeMap();
     });
-    this.subscriptions.push(sub);
-    this.adressService.fetchAddresses(this.selectedOpeartorType);
+
+    const companySub = this.adressService.companies$.subscribe((companies) => {
+      this.allCompanies = [
+        {
+          idcompany: 0,
+          name: 'Todas',
+          cnpj: '',
+        },
+        ...companies,
+      ];
+    });
+
+    this.subscriptions.push(sub, companySub);
+
+    this.adressService.fetchCompanies();
+    this.adressService.fetchAddresses(
+      this.selectedOpeartorType,
+      this.selectedCompany
+    );
   }
 
   ngAfterViewInit(): void {
@@ -225,7 +251,10 @@ export class MapComponent implements OnInit, OnDestroy {
 
     this.clearMapLayers();
 
-    this.adressService.fetchAddresses(this.selectedOpeartorType);
+    this.adressService.fetchAddresses(
+      this.selectedOpeartorType,
+      this.selectedCompany
+    );
   }
 
   switchDisplayFilterDrawer() {
