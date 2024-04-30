@@ -31,6 +31,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatRadioModule } from '@angular/material/radio';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 
@@ -138,7 +139,8 @@ export class MapComponent implements OnInit, OnDestroy {
     private adressService: AdressService,
     private osrmService: OsrmService,
     private loadingService: LoadingService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private _snackBar: MatSnackBar
   ) {
     this.loading$ = this.loadingService.loading$;
   }
@@ -146,6 +148,13 @@ export class MapComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const sub = this.adressService.addresses$.subscribe((addresses) => {
       console.log(addresses.length);
+      this._snackBar.open(
+        `Foram encontrados ${addresses.length} registros`,
+        'Fechar',
+        {
+          duration: 5000,
+        }
+      );
       this.locationData = addresses.map((d: any, index) => {
         return {
           type: 'Feature',
@@ -274,10 +283,11 @@ export class MapComponent implements OnInit, OnDestroy {
   }
 
   onManageFilters(e: any) {
-    const companies = this.selectedCompanies.value?.filter(
-      (company) => company !== 'select-all'
-    ) as string[];
-    const operators = this.selectedOperators.value as string[];
+    const companies =
+      (this.selectedCompanies.value?.filter(
+        (company) => company !== 'select-all'
+      ) as string[]) || [];
+    const operators = (this.selectedOperators.value as string[]) || [];
     const grouping = this.selectedGrouping;
     const range: DateRange<Date> = this.rangeInput.value as DateRange<Date>;
     const startDate = format(range.start || new Date(), 'yyyy-MM-dd HH:mm:ss');
