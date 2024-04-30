@@ -51,12 +51,6 @@ export class AdressService {
     });
   }
 
-  fetchCompanies(): void {
-    this.getCompanies().subscribe((companies) => {
-      this.companiesSubject.next(companies);
-    });
-  }
-
   getCompanies(): Observable<any> {
     return this.http.get(`${environment.BACKEND_URL}/getAllCompanies`);
   }
@@ -82,6 +76,12 @@ export class AdressService {
   getTripleOperatorLocations(selectedCompany: string): Observable<any> {
     return this.http.get(`${environment.BACKEND_URL}/tripleOperatorLocations`, {
       params: { selectedCompany },
+    });
+  }
+
+  fetchCompanies(): void {
+    this.getCompanies().subscribe((companies) => {
+      this.companiesSubject.next(companies);
     });
   }
 }

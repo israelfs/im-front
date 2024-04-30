@@ -1,70 +1,153 @@
 <div class="relative w-full h-full">
   <div
-    class="absolute top-0 left-0 h-full w-[30%] min-w-[366px] flex flex-col items-center justify-center overflow-auto border-r-[1px] bg-gray-500 z-40"
+    class="absolute top-0 left-0 h-full w-[30%] min-w-[366px] flex flex-col items-start overflow-auto border-r-[1px] bg-white bg-opacity-60 backdrop-blur-md z-40 justify-between"
     [ngClass]="{ hidden: !displayFilterDrawer }"
   >
-    <mat-form-field class="w-3/4 mt-2">
-      <mat-label>Selecione a empresa</mat-label>
-      <mat-select
-        name="companyName"
-        [(value)]="selectedCompany"
-        (selectionChange)="onManageFilters($event)"
-        [disabled]="loading$ | async"
-        class="mt-1"
-      >
-        <mat-option *ngFor="let company of allCompanies" [value]="company.name">
-          {{ company.name }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
+    <img
+      class="mb-6 h-16 w-auto ml-auto m-3"
+      src="../assets/imediatum.png"
+      alt="Company Logo"
+    />
 
-    <mat-form-field class="w-3/4 mt-2">
-      <mat-label>Selecione o tipo de contrato do Chip</mat-label>
-      <mat-select
-        name="operatorType"
-        [(value)]="selectedOpeartorType"
-        (selectionChange)="onManageFilters($event)"
-        [disabled]="loading$ | async"
-        class="mt-1"
+    <div class="flex flex-col items-center w-full overflow-auto">
+      <mat-form-field class="w-3/4 mt-2">
+        <mat-label>Empresa</mat-label>
+        <mat-select
+          name="companyName"
+          [formControl]="selectedCompanies"
+          class="mt-1"
+          multiple
+        >
+          <mat-select-trigger>
+            {{selectedCompanies.value?.[0] || ''}}
+            @if ((selectedCompanies.value?.length || 0) > 1) {
+            <span class="additional-selection">
+              (+{{ (selectedCompanies.value?.length || 0) - 1 }}
+              {{ selectedCompanies.value?.length === 2 ? "outro" : "outros" }})
+            </span>
+            }
+          </mat-select-trigger>
+          <mat-option value="select-all" selectAll [allValues]="companiesList"
+            >Select all</mat-option
+          >
+          @for (company of companiesList; track company) {
+          <mat-option [value]="company">{{ company }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="w-3/4 mt-2">
+        <mat-label>Tipo de contrato do chip</mat-label>
+        <mat-select
+          name="operatorType"
+          [formControl]="selectedOperators"
+          class="mt-1"
+          multiple
+        >
+          <mat-select-trigger>
+            {{selectedOperators.value?.[0] || ''}}
+            @if ((selectedOperators.value?.length || 0) > 1) {
+            <span class="additional-selection">
+              (+{{ (selectedOperators.value?.length || 0) - 1 }}
+              {{ selectedOperators.value?.length === 2 ? "outro" : "outros" }})
+            </span>
+            }
+          </mat-select-trigger>
+          <mat-option
+            value="select-all"
+            selectAll
+            [allValues]="chipOperatorList"
+            >Select all</mat-option
+          >
+          @for (operator of chipOperatorList; track operator) {
+          <mat-option [value]="operator">{{ operator }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-label class="mt-2 text-lg">
+        <h1 class="font-medium">Agrupamento</h1></mat-label
       >
-        <mat-option value="all">Todas</mat-option>
-        <mat-option value="mono">Mono operadora</mat-option>
-        <mat-option value="bi">Bi operadora</mat-option>
-        <mat-option value="multi">Multi operadora</mat-option>
-      </mat-select>
-    </mat-form-field>
+      <mat-button-toggle-group
+        name="grouping"
+        class="mt-2"
+        [(value)]="selectedGrouping"
+      >
+        @for (grouping of groupingList; track grouping) {
+        <mat-button-toggle [value]="grouping.value">{{
+          grouping.name
+        }}</mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+
+      <mat-label class="mt-2 text-lg">
+        <h1 class="font-medium">Data de início e fim</h1></mat-label
+      >
+      <mat-form-field class="mt-2">
+        <mat-date-range-input
+          [rangePicker]="picker"
+          #rangeInput="matDateRangeInput"
+        >
+          <input matStartDate placeholder="Start date" />
+          <input matEndDate placeholder="End date" />
+        </mat-date-range-input>
+        <mat-hint><span>MM/DD/YYYY – MM/DD/YYYY</span></mat-hint>
+        <mat-datepicker-toggle
+          matIconSuffix
+          [for]="picker"
+        ></mat-datepicker-toggle>
+        <mat-date-range-picker #picker></mat-date-range-picker>
+      </mat-form-field>
+    </div>
 
     <div class="w-full border-t-2 border-gray-300 my-4"></div>
 
-    <mat-label>Selecione o tipo de layer</mat-label>
-    <mat-radio-group
-      name="layerType"
-      [(ngModel)]="selectedLayerType"
-      (change)="onManageFilters($event)"
-      class="mt-1"
-    >
-      <mat-radio-button value="heatmap" [disabled]="loading$ | async"
-        >Heatmap</mat-radio-button
+    <div class="flex flex-col items-center w-full overflow-auto flex-grow">
+      <mat-label class="mt-2 text-lg">
+        <h1 class="font-medium">Tipo de layer</h1></mat-label
       >
-      <mat-radio-button value="circle" [disabled]="loading$ | async"
-        >Circle</mat-radio-button
+      <mat-radio-group
+        name="layerType"
+        [(ngModel)]="selectedLayerType"
+        class="mt-1"
       >
-    </mat-radio-group>
-
-    <mat-label class="mt-4">Selecione o tipo de filtragem</mat-label>
-    <mat-radio-group
-      name="filterType"
-      [(ngModel)]="selectedFilterType"
-      (change)="onManageFilters($event)"
-      class="mt-1"
-    >
-      <mat-radio-button value="signal" [disabled]="loading$ | async"
-        >Sinal GSM</mat-radio-button
+        <mat-radio-button value="heatmap" [disabled]="loading$ | async">
+          <span class="font-normal text-base"> Heatmap </span>
+        </mat-radio-button>
+        <mat-radio-button value="circle" [disabled]="loading$ | async"
+          ><span class="font-normal text-base"> Circle </span></mat-radio-button
+        >
+      </mat-radio-group>
+      <mat-label class="mt-2 text-lg">
+        <h1 class="font-medium">Tipo de filtragem</h1></mat-label
       >
-      <mat-radio-button value="delay" [disabled]="loading$ | async"
-        >Atraso no envio do sinal</mat-radio-button
+      <mat-radio-group
+        name="filterType"
+        [(ngModel)]="selectedFilterType"
+        class="mt-1"
       >
-    </mat-radio-group>
+        <mat-radio-button value="signal" [disabled]="loading$ | async">
+          <span class="font-normal text-base">
+            Sinal GSM
+          </span></mat-radio-button
+        >
+        <mat-radio-button value="delay" [disabled]="loading$ | async">
+          <span class="font-normal text-base">
+            Atraso no envio do sinal
+          </span></mat-radio-button
+        >
+      </mat-radio-group>
+    </div>
+    <div class="absolute bottom-0 w-full flex justify-center overflow-hidden">
+      <button
+        mat-raised-button
+        class="w-full"
+        (click)="onManageFilters($event)"
+        style="height: 4rem"
+      >
+        <span class="text-2xl"> Aplicar Filtros</span>
+      </button>
+    </div>
   </div>
 
   <div
@@ -75,7 +158,7 @@
   </div>
 
   <button
-    class="fixed top-0 left-0 m-3 z-50 text-sm font-bold bg-gray-500 hover:bg-gray-700 text-white py-2 px-2 rounded-full transition-all duration-500 ease-in-out"
+    class="fixed top-0 left-0 m-3 z-50 text-sm font-bold bg-white bg-opacity-60 backdrop-blur-md hover:bg-slate-100 py-2 px-2 rounded-full transition-all duration-500 ease-in-out"
     (click)="switchDisplayFilterDrawer()"
     [matTooltip]="displayFilterDrawer ? 'Fechar filtros' : 'Abrir filtros'"
   >

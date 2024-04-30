@@ -15,19 +15,26 @@ import { Observable, Subscription, finalize } from 'rxjs';
 import { OsrmService } from '../../services/osrm.service';
 import { colors } from '../../shared/colors';
 import { CommonModule } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatInputModule } from '@angular/material/input';
+import {
+  DateRange,
+  MatDateRangeInput,
+  MatDateRangePicker,
+  MatDatepickerInputEvent,
+  MatDatepickerModule,
+} from '@angular/material/datepicker';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatRadioModule } from '@angular/material/radio';
-import { FormsModule } from '@angular/forms';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 
-import {
-  mapStyles,
-  mapTilerStyles,
-  osmStyle,
-  wikimediaStyle,
-} from './map-styles';
+import { mapTilerStyles } from './map-styles';
 import { AsyncPipe, NgClass, NgIf, NgTemplateOutlet } from '@angular/common';
 import { LoadingService } from '../../services/loading.service';
 import {
@@ -41,7 +48,10 @@ import {
   goodHeatmapDelayLayer,
   prettyBadHeatmapSignalLayer,
   prettyBadHeatmapDelayLayer,
+  prettyGoodHeatmapSignalLayer,
+  prettyGoodHeatmapDelayLayer,
 } from './layers';
+import { SelectAllDirective } from '../../shared/directives/select-all.directive';
 
 type gtfsType = {
   gsm_signal: number;
@@ -63,17 +73,26 @@ type gtfsType = {
   imports: [
     SharedComponentsModule,
     CommonModule,
+    MatButtonModule,
     MatProgressSpinnerModule,
-    MatSidenavModule,
     MatSelectModule,
+    FormsModule,
+    MatSidenavModule,
+    MatFormFieldModule,
+    ReactiveFormsModule,
+    MatInputModule,
     MatTooltipModule,
     MatRadioModule,
+    MatButtonToggleModule,
+    MatDatepickerModule,
     FormsModule,
     AsyncPipe,
     NgIf,
     NgClass,
     NgTemplateOutlet,
+    SelectAllDirective,
   ],
+  providers: [provideNativeDateAdapter()],
 })
 export class MapComponent implements OnInit, OnDestroy {
   map: Map | undefined;
@@ -83,20 +102,26 @@ export class MapComponent implements OnInit, OnDestroy {
   @ViewChild('map')
   private mapContainer!: ElementRef<HTMLElement>;
 
+  @ViewChild('picker') picker!: MatDateRangePicker<Date>;
+  @ViewChild('rangeInput') rangeInput!: MatDateRangeInput<Date>;
+
   private currentStyle = 0;
   private locationData: any[] = [];
 
-  allCompanies: {
-    idcompany: number;
-    name: string;
-    cnpj: string;
-  }[] = [];
-
   displayFilterDrawer = false;
 
-  selectedOpeartorType: 'all' | 'mono' | 'bi' | 'multi' = 'all';
+  companiesList: string[] = ['Prefetch'];
+  selectedCompanies = new FormControl<string[] | undefined>([]);
 
-  selectedCompany: string = 'Todas';
+  chipOperatorList: string[] = ['Único', 'Dual', 'Multi'];
+  selectedOperators = new FormControl<string[] | undefined>([]);
+
+  groupingList: { name: string; value: string }[] = [
+    { name: 'Baixo', value: 'low' },
+    { name: 'Médio', value: 'medium' },
+    { name: 'Alto', value: 'high' },
+  ];
+  selectedGrouping: 'low' | 'medium' | 'high' = 'low';
 
   selectedLayerType: 'heatmap' | 'circle' = 'heatmap';
 
@@ -115,8 +140,6 @@ export class MapComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.loadingService.loadingOn();
-
     const sub = this.adressService.addresses$.subscribe((addresses) => {
       this.locationData = addresses.map((d: any, index) => {
         return {
@@ -137,24 +160,21 @@ export class MapComponent implements OnInit, OnDestroy {
       this.initializeMap();
     });
 
-    const companySub = this.adressService.companies$.subscribe((companies) => {
-      this.allCompanies = [
-        {
-          idcompany: 0,
-          name: 'Todas',
-          cnpj: '',
-        },
-        ...companies,
-      ];
-    });
+    const companySub = this.adressService.companies$.subscribe(
+      (companies: { empresa: string }[]) => {
+        if (companies.length > 0) {
+          this.companiesList = companies.map((d) => d.empresa);
+        }
+      }
+    );
 
     this.subscriptions.push(sub, companySub);
 
     this.adressService.fetchCompanies();
-    this.adressService.fetchAddresses(
-      this.selectedOpeartorType,
-      this.selectedCompany
-    );
+    // this.adressService.fetchAddresses(
+    //   this.selectedOpeartorType,
+    //   this.selectedCompany
+    // );
   }
 
   ngAfterViewInit(): void {
@@ -187,11 +207,13 @@ export class MapComponent implements OnInit, OnDestroy {
   useHeatmapLayer() {
     if (this.map) {
       if (this.selectedFilterType === 'signal') {
-        this.map.addLayer(badHeatmapSignalLayer);
         this.map.addLayer(prettyBadHeatmapSignalLayer);
+        this.map.addLayer(badHeatmapSignalLayer);
         this.map.addLayer(mediumHeatmapSignalLayer);
         this.map.addLayer(goodHeatmapSignalLayer);
+        this.map.addLayer(prettyGoodHeatmapSignalLayer);
       } else {
+        this.map.addLayer(prettyGoodHeatmapDelayLayer);
         this.map.addLayer(goodHeatmapDelayLayer);
         this.map.addLayer(mediumHeatmapDelayLayer);
         this.map.addLayer(badHeatmapDelayLayer);
@@ -246,15 +268,22 @@ export class MapComponent implements OnInit, OnDestroy {
     }
   }
 
-  onManageFilters(event: any) {
-    this.loadingService.loadingOn();
+  onManageFilters(e: any) {
+    const selectedCompanies = this.selectedCompanies.value;
+    const selectedOperators = this.selectedOperators.value;
 
-    this.clearMapLayers();
+    const range: DateRange<Date> = this.rangeInput.value as DateRange<Date>;
+    const startDate = range.start;
+    const endDate = range.end;
 
-    this.adressService.fetchAddresses(
-      this.selectedOpeartorType,
-      this.selectedCompany
-    );
+    console.log(selectedCompanies, selectedOperators, startDate, endDate);
+
+    // this.loadingService.loadingOn();
+    // this.clearMapLayers();
+    // this.adressService.fetchAddresses(
+    //   this.selectedOpeartorType,
+    //   this.selectedCompany
+    // );
   }
 
   switchDisplayFilterDrawer() {
