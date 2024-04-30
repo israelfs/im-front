@@ -11,8 +11,10 @@ export const circleSignalLayer: maplibregl.AddLayerObject = {
       6,
       'rgba(255, 100, 100)',
       12,
-      'rgb(144, 238, 144)',
+      'rgb(255, 255, 0)',
       20,
+      'rgb(144, 238, 144)',
+      25,
       'rgb(0, 128, 0)',
     ],
     'circle-opacity': 0.5,
@@ -28,25 +30,34 @@ export const circleDelayLayer: maplibregl.AddLayerObject = {
     'circle-color': [
       'step',
       ['get', 'timeDelay'],
-      'rgb(0, 128, 0)',
-      60,
-      'rgb(144, 238, 144)',
-      300,
-      'rgba(255, 100, 100)',
-      900,
       'rgb(255, 0, 0)',
+      16,
+      'rgba(255, 100, 100)',
+      60,
+      'rgb(255, 255, 0)',
+      300,
+      'rgb(144, 238, 144)',
+      600,
+      'rgb(0, 128, 0)',
     ],
     'circle-opacity': 0.5,
   },
 };
 
-// muito bom > 20
-// bom > 12
+// delay muito bom <= 16s
+// delay bom <= 60s
+// delay medio <= 300s
+// delay ruim <= 600s
+// delay muito ruim > 600s
+
+// muito bom > 25
+// bom > 20
+// medio > 12
 // ruim > 6
 // muito ruim > 0
 
 export const prettyBadHeatmapSignalLayer: maplibregl.AddLayerObject = {
-  id: 'pretty-weak-heatmap',
+  id: 'pretty-bad-heatmap',
   type: 'heatmap',
   source: 'location',
   filter: ['<=', ['get', 'signal'], 6],
@@ -67,7 +78,7 @@ export const prettyBadHeatmapSignalLayer: maplibregl.AddLayerObject = {
 };
 
 export const badHeatmapSignalLayer: maplibregl.AddLayerObject = {
-  id: 'weak-heatmap',
+  id: 'bad-heatmap',
   type: 'heatmap',
   source: 'location',
   filter: ['all', ['>', ['get', 'signal'], 6], ['<=', ['get', 'signal'], 12]],
@@ -100,7 +111,7 @@ export const mediumHeatmapSignalLayer: maplibregl.AddLayerObject = {
       0,
       'rgba(255, 255, 0, 0)',
       1,
-      'rgb(144, 238, 144)',
+      'rgb(255, 255, 0)',
     ],
     'heatmap-intensity': 1,
     'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 0, 22, 30],
@@ -109,10 +120,31 @@ export const mediumHeatmapSignalLayer: maplibregl.AddLayerObject = {
 };
 
 export const goodHeatmapSignalLayer: maplibregl.AddLayerObject = {
-  id: 'strong-heatmap',
+  id: 'good-heatmap',
   type: 'heatmap',
   source: 'location',
-  filter: ['>', ['get', 'signal'], 20],
+  filter: ['all', ['>', ['get', 'signal'], 20], ['<=', ['get', 'signal'], 25]],
+  paint: {
+    'heatmap-color': [
+      'interpolate',
+      ['linear'],
+      ['heatmap-density'],
+      0,
+      'rgba(255, 255, 0, 0)',
+      1,
+      'rgb(144, 238, 144)',
+    ],
+    'heatmap-intensity': 1,
+    'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 0, 22, 30],
+    'heatmap-opacity': 0.8,
+  },
+};
+
+export const prettyGoodHeatmapSignalLayer: maplibregl.AddLayerObject = {
+  id: 'pretty-good-heatmap',
+  type: 'heatmap',
+  source: 'location',
+  filter: ['>', ['get', 'signal'], 25],
   paint: {
     'heatmap-color': [
       'interpolate',
@@ -129,16 +161,17 @@ export const goodHeatmapSignalLayer: maplibregl.AddLayerObject = {
   },
 };
 
-// delay bom < 60s
-// delay medio < 300s
-// delay ruim < 15*60s
-// delay muito ruim > 3600s
+// delay muito bom <= 16s
+// delay bom <= 60s
+// delay medio <= 300s
+// delay ruim <= 600s
+// delay muito ruim > 600s
 
-export const goodHeatmapDelayLayer: maplibregl.AddLayerObject = {
-  id: 'good-heatmap-delay',
+export const prettyGoodHeatmapDelayLayer: maplibregl.AddLayerObject = {
+  id: 'pretty-good-heatmap-delay',
   type: 'heatmap',
   source: 'location',
-  filter: ['<=', ['get', 'timeDelay'], 60],
+  filter: ['<=', ['get', 'timeDelay'], 16],
   paint: {
     'heatmap-color': [
       'interpolate',
@@ -148,6 +181,31 @@ export const goodHeatmapDelayLayer: maplibregl.AddLayerObject = {
       'rgba(0, 128, 0, 0)',
       1,
       'rgba(0, 128, 0, 1)',
+    ],
+    'heatmap-intensity': 1,
+    'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 0, 22, 30],
+    'heatmap-opacity': 0.8,
+  },
+};
+
+export const goodHeatmapDelayLayer: maplibregl.AddLayerObject = {
+  id: 'good-heatmap-delay',
+  type: 'heatmap',
+  source: 'location',
+  filter: [
+    'all',
+    ['>', ['get', 'timeDelay'], 16],
+    ['<=', ['get', 'timeDelay'], 60],
+  ],
+  paint: {
+    'heatmap-color': [
+      'interpolate',
+      ['linear'],
+      ['heatmap-density'],
+      0,
+      'rgba(255, 255, 102, 0)',
+      1,
+      'rgb(144, 238, 144)',
     ],
     'heatmap-intensity': 1,
     'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 0, 22, 30],
@@ -172,7 +230,7 @@ export const mediumHeatmapDelayLayer: maplibregl.AddLayerObject = {
       0,
       'rgba(255, 255, 102, 0)',
       1,
-      'rgb(144, 238, 144)',
+      'rgb(255, 255, 0)',
     ],
     'heatmap-intensity': 1,
     'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 0, 22, 30],
@@ -187,7 +245,7 @@ export const badHeatmapDelayLayer: maplibregl.AddLayerObject = {
   filter: [
     'all',
     ['>', ['get', 'timeDelay'], 300],
-    ['<=', ['get', 'timeDelay'], 900],
+    ['<=', ['get', 'timeDelay'], 600],
   ],
   paint: {
     'heatmap-color': [
@@ -209,7 +267,7 @@ export const prettyBadHeatmapDelayLayer: maplibregl.AddLayerObject = {
   id: 'pretty-bad-heatmap-delay',
   type: 'heatmap',
   source: 'location',
-  filter: ['>', ['get', 'timeDelay'], 900],
+  filter: ['>', ['get', 'timeDelay'], 600],
   paint: {
     'heatmap-color': [
       'interpolate',
