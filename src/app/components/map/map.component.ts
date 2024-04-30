@@ -106,6 +106,9 @@ export class MapComponent implements OnInit, OnDestroy {
   @ViewChild('picker') picker!: MatDateRangePicker<Date>;
   @ViewChild('rangeInput') rangeInput!: MatDateRangeInput<Date>;
 
+  minDate: Date = new Date(2024, 2, 15);
+  maxDate: Date = new Date();
+
   private currentStyle = 0;
   private locationData: any[] = [];
 

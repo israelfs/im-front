@@ -87,6 +87,8 @@
         <mat-date-range-input
           [rangePicker]="picker"
           #rangeInput="matDateRangeInput"
+          [min]="minDate"
+          [max]="maxDate"
         >
           <input matStartDate placeholder="Start date" />
           <input matEndDate placeholder="End date" />
@@ -146,7 +148,7 @@
         style="height: 4rem"
         [disabled]="loading$ | async"
       >
-        <span class="text-2xl"> Aplicar Filtros</span>
+        <span class="text-xl"> Aplicar Filtros</span>
       </button>
     </div>
   </div>
