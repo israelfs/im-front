@@ -52,6 +52,7 @@ import {
   prettyGoodHeatmapDelayLayer,
 } from './layers';
 import { SelectAllDirective } from '../../shared/directives/select-all.directive';
+import { format } from 'date-fns';
 
 type gtfsType = {
   gsm_signal: number;
@@ -110,7 +111,7 @@ export class MapComponent implements OnInit, OnDestroy {
 
   displayFilterDrawer = false;
 
-  companiesList: string[] = ['Prefetch'];
+  companiesList: string[] = ['Not Found!'];
   selectedCompanies = new FormControl<string[] | undefined>([]);
 
   chipOperatorList: string[] = ['Único', 'Dual', 'Multi'];
@@ -141,6 +142,7 @@ export class MapComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const sub = this.adressService.addresses$.subscribe((addresses) => {
+      console.log(addresses.length);
       this.locationData = addresses.map((d: any, index) => {
         return {
           type: 'Feature',
@@ -163,7 +165,7 @@ export class MapComponent implements OnInit, OnDestroy {
     const companySub = this.adressService.companies$.subscribe(
       (companies: { empresa: string }[]) => {
         if (companies.length > 0) {
-          this.companiesList = companies.map((d) => d.empresa);
+          this.companiesList = [...companies.map((d) => d.empresa)];
         }
       }
     );
@@ -269,21 +271,24 @@ export class MapComponent implements OnInit, OnDestroy {
   }
 
   onManageFilters(e: any) {
-    const selectedCompanies = this.selectedCompanies.value;
-    const selectedOperators = this.selectedOperators.value;
-
+    const companies = this.selectedCompanies.value?.filter(
+      (company) => company !== 'select-all'
+    ) as string[];
+    const operators = this.selectedOperators.value as string[];
+    const grouping = this.selectedGrouping;
     const range: DateRange<Date> = this.rangeInput.value as DateRange<Date>;
-    const startDate = range.start;
-    const endDate = range.end;
+    const startDate = format(range.start || new Date(), 'yyyy-MM-dd HH:mm:ss');
+    const endDate = format(range.end || new Date(), 'yyyy-MM-dd HH:mm:ss');
 
-    console.log(selectedCompanies, selectedOperators, startDate, endDate);
-
-    // this.loadingService.loadingOn();
-    // this.clearMapLayers();
-    // this.adressService.fetchAddresses(
-    //   this.selectedOpeartorType,
-    //   this.selectedCompany
-    // );
+    this.loadingService.loadingOn();
+    this.clearMapLayers();
+    this.adressService.fetchAddresses(
+      companies,
+      operators,
+      startDate,
+      endDate,
+      grouping
+    );
   }
 
   switchDisplayFilterDrawer() {

@@ -28,54 +28,38 @@ export class AdressService {
   companies$ = this.companiesSubject.asObservable();
 
   fetchAddresses(
-    type: 'all' | 'mono' | 'bi' | 'multi',
-    seletctedCompany: string
+    companies: string[],
+    operators: string[],
+    startDate: string,
+    endDate: string,
+    grouping: string
   ): void {
-    let obs: Observable<any>;
-    switch (type) {
-      case 'all':
-        obs = this.getLocations(seletctedCompany);
-        break;
-      case 'mono':
-        obs = this.getMonoOperatorLocations(seletctedCompany);
-        break;
-      case 'bi':
-        obs = this.getBiOperatorLocations(seletctedCompany);
-        break;
-      case 'multi':
-        obs = this.getTripleOperatorLocations(seletctedCompany);
-        break;
-    }
-    obs.subscribe((locations) => {
-      this.addressesSubject.next(locations);
+    this.getLocations(
+      companies,
+      operators,
+      startDate,
+      endDate,
+      grouping
+    ).subscribe((addresses) => {
+      this.addressesSubject.next(addresses);
     });
   }
 
-  getCompanies(): Observable<any> {
-    return this.http.get(`${environment.BACKEND_URL}/getAllCompanies`);
-  }
-
-  getLocations(selectedCompany: string): Observable<any> {
+  getLocations(
+    companies: string[],
+    operators: string[],
+    startDate: string,
+    endDate: string,
+    grouping: string
+  ): Observable<any> {
     return this.http.get(`${environment.BACKEND_URL}/locations`, {
-      params: { selectedCompany },
-    });
-  }
-
-  getMonoOperatorLocations(selectedCompany: string): Observable<any> {
-    return this.http.get(`${environment.BACKEND_URL}/monoOperatorLocations`, {
-      params: { selectedCompany },
-    });
-  }
-
-  getBiOperatorLocations(selectedCompany: string): Observable<any> {
-    return this.http.get(`${environment.BACKEND_URL}/biOperatorLocations`, {
-      params: { selectedCompany },
-    });
-  }
-
-  getTripleOperatorLocations(selectedCompany: string): Observable<any> {
-    return this.http.get(`${environment.BACKEND_URL}/tripleOperatorLocations`, {
-      params: { selectedCompany },
+      params: {
+        companies,
+        operators,
+        startDate,
+        endDate,
+        grouping,
+      },
     });
   }
 
@@ -83,5 +67,9 @@ export class AdressService {
     this.getCompanies().subscribe((companies) => {
       this.companiesSubject.next(companies);
     });
+  }
+
+  getCompanies(): Observable<any> {
+    return this.http.get(`${environment.BACKEND_URL}/getAllCompanies`);
   }
 }
