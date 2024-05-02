@@ -54,6 +54,7 @@ import {
 } from './layers';
 import { SelectAllDirective } from '../../shared/directives/select-all.directive';
 import { format } from 'date-fns';
+import { PlaceAutocompleteComponent } from '../place-autocomplete/place-autocomplete.component';
 
 type gtfsType = {
   gsm_signal: number;
@@ -93,6 +94,7 @@ type gtfsType = {
     NgClass,
     NgTemplateOutlet,
     SelectAllDirective,
+    PlaceAutocompleteComponent,
   ],
   providers: [provideNativeDateAdapter()],
 })
@@ -106,6 +108,29 @@ export class MapComponent implements OnInit, OnDestroy {
 
   @ViewChild('picker') picker!: MatDateRangePicker<Date>;
   @ViewChild('rangeInput') rangeInput!: MatDateRangeInput<Date>;
+
+  private _geocodeFilter:
+    | {
+        latitude: number;
+        longitude: number;
+      }
+    | undefined;
+
+  get geocodeFilter() {
+    return this._geocodeFilter;
+  }
+
+  set geocodeFilter(
+    value: { latitude: number; longitude: number } | undefined
+  ) {
+    if (value !== this._geocodeFilter) {
+      this._geocodeFilter = value;
+      if (value) {
+        this.map?.setCenter([value.longitude, value.latitude]);
+        this.map?.setZoom(15);
+      }
+    }
+  }
 
   displayFilterDrawer = false;
 

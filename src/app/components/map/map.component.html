@@ -163,12 +163,16 @@
       </button>
     </div>
   </div>
-
   <div
     class="absolute inset-0 z-30 flex items-center justify-center"
     *ngIf="loading$ | async"
   >
     <mat-spinner class="spinner-color"></mat-spinner>
+  </div>
+
+  <div class="fixed top-3 right-3 m-3 z-50">
+    <app-place-autocomplete (placeSelected)="geocodeFilter = $event">
+    </app-place-autocomplete>
   </div>
 
   <button
