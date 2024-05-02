@@ -107,13 +107,15 @@ export class MapComponent implements OnInit, OnDestroy {
   @ViewChild('picker') picker!: MatDateRangePicker<Date>;
   @ViewChild('rangeInput') rangeInput!: MatDateRangeInput<Date>;
 
+  displayFilterDrawer = false;
+
+  makeNewRequest = false;
+
   minDate: Date = new Date(2024, 2, 15);
   maxDate: Date = new Date();
 
   private currentStyle = 0;
   private locationData: any[] = [];
-
-  displayFilterDrawer = false;
 
   companiesList: string[] = ['Not Found!'];
   selectedCompanies = new FormControl<string[] | undefined>([]);
@@ -295,13 +297,18 @@ export class MapComponent implements OnInit, OnDestroy {
 
     this.loadingService.loadingOn();
     this.clearMapLayers();
-    this.adressService.fetchAddresses(
-      companies,
-      operators,
-      startDate,
-      endDate,
-      grouping
-    );
+    if (this.makeNewRequest) {
+      this.adressService.fetchAddresses(
+        companies,
+        operators,
+        startDate,
+        endDate,
+        grouping
+      );
+      this.makeNewRequest = false;
+    } else {
+      this.initializeMap();
+    }
   }
 
   switchDisplayFilterDrawer() {

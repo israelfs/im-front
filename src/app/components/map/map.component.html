@@ -17,6 +17,7 @@
           [formControl]="selectedCompanies"
           class="mt-1"
           multiple
+          (selectionChange)="makeNewRequest = true"
         >
           <mat-select-trigger>
             {{(selectedCompanies.value?.[0] === 'select-all' ? selectedCompanies.value?.[1] : selectedCompanies.value?.[0]) || ''}}
@@ -43,6 +44,7 @@
           [formControl]="selectedOperators"
           class="mt-1"
           multiple
+          (selectionChange)="makeNewRequest = true"
         >
           <mat-select-trigger>
             {{selectedOperators.value?.[0] || ''}}
@@ -72,6 +74,7 @@
         name="grouping"
         class="mt-2"
         [(value)]="selectedGrouping"
+        (change)="makeNewRequest = true"
       >
         @for (grouping of groupingList; track grouping) {
         <mat-button-toggle [value]="grouping.value">{{
@@ -90,8 +93,16 @@
           [min]="minDate"
           [max]="maxDate"
         >
-          <input matStartDate placeholder="Start date" />
-          <input matEndDate placeholder="End date" />
+          <input
+            matStartDate
+            placeholder="Start date"
+            (dateChange)="makeNewRequest = true"
+          />
+          <input
+            matEndDate
+            placeholder="End date"
+            (dateChange)="makeNewRequest = true"
+          />
         </mat-date-range-input>
         <mat-hint><span>MM/DD/YYYY – MM/DD/YYYY</span></mat-hint>
         <mat-datepicker-toggle
