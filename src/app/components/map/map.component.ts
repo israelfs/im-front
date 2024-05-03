@@ -162,7 +162,7 @@ export class MapComponent implements OnInit, OnDestroy {
   ];
   selectedCompanies = new FormControl<string[][] | undefined>([]);
 
-  chipOperatorList: string[] = ['Único', 'Dual', 'Multi'];
+  chipOperatorList: string[] = ['Único', 'Dual', 'Multi', '4G'];
   selectedOperators = new FormControl<string[] | undefined>([]);
 
   groupingList: { name: string; value: string }[] = [

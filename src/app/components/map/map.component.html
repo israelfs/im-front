@@ -42,10 +42,9 @@
           name="operatorType"
           [formControl]="selectedOperators"
           class="mt-1"
-          multiple
           (selectionChange)="makeNewRequest = true"
         >
-          <mat-select-trigger>
+          <!-- <mat-select-trigger>
             {{selectedOperators.value?.[0] || ''}}
             @if ((selectedOperators.value?.length || 0) > 1) {
             <span class="additional-selection">
@@ -53,13 +52,13 @@
               {{ selectedOperators.value?.length === 2 ? "outro" : "outros" }})
             </span>
             }
-          </mat-select-trigger>
-          <mat-option
+          </mat-select-trigger> -->
+          <!-- <mat-option
             value="select-all"
             selectAll
             [allValues]="chipOperatorList"
             >Select all</mat-option
-          >
+          > -->
           @for (operator of chipOperatorList; track operator) {
           <mat-option [value]="operator">{{ operator }}</mat-option>
           }
