@@ -20,20 +20,19 @@
           (selectionChange)="makeNewRequest = true"
         >
           <mat-select-trigger>
-            {{(selectedCompanies.value?.[0] === 'select-all' ? selectedCompanies.value?.[1] : selectedCompanies.value?.[0]) || ''}}
-            @if ((selectedCompanies.value?.length || 0) > 1) {
-            <span class="additional-selection">
-              (+{{ (selectedCompanies.value?.length || 0) - 1 - (selectedCompanies.value?.[0] === 'select-all' ? 1 : 0)}}
-              {{ selectedCompanies.value?.length === 2 ? "outro" : "outros" }})
-            </span>
-            }
+            {{ getSelectedCompaniesNames() }}
           </mat-select-trigger>
-          <mat-option value="select-all" selectAll [allValues]="companiesList"
-            >Select all</mat-option
+          <mat-optgroup
+            *ngFor="let group of companiesList"
+            [label]="group.name"
           >
-          @for (company of companiesList; track company) {
-          <mat-option [value]="company">{{ company }}</mat-option>
-          }
+            <mat-option
+              *ngFor="let operation of group.operation"
+              [value]="[group.name, operation]"
+            >
+              {{ operation }}
+            </mat-option>
+          </mat-optgroup>
         </mat-select>
       </mat-form-field>
 

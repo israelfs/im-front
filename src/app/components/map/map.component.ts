@@ -142,8 +142,25 @@ export class MapComponent implements OnInit, OnDestroy {
   private currentStyle = 0;
   private locationData: any[] = [];
 
-  companiesList: string[] = ['Not Found!'];
-  selectedCompanies = new FormControl<string[] | undefined>([]);
+  companiesList = [
+    {
+      name: 'Transtusa',
+      operation: ['Urbano', 'Eficiente', 'Fretamento', 'Apoio', 'Ideal'],
+    },
+    {
+      name: 'Rimatur',
+      operation: ['Ideal', 'Fretamento'],
+    },
+    {
+      name: 'Gidion',
+      operation: ['Urbano', 'Eficiente', 'Fretamento', 'Ideal'],
+    },
+    {
+      name: 'Fratelli',
+      operation: ['Ideal'],
+    },
+  ];
+  selectedCompanies = new FormControl<string[][] | undefined>([]);
 
   chipOperatorList: string[] = ['Único', 'Dual', 'Multi'];
   selectedOperators = new FormControl<string[] | undefined>([]);
@@ -201,17 +218,17 @@ export class MapComponent implements OnInit, OnDestroy {
       this.initializeMap();
     });
 
-    const companySub = this.adressService.companies$.subscribe(
-      (companies: { empresa: string }[]) => {
-        if (companies.length > 0) {
-          this.companiesList = [...companies.map((d) => d.empresa)];
-        }
-      }
-    );
+    this.subscriptions.push(sub);
 
-    this.subscriptions.push(sub, companySub);
+    // const companySub = this.adressService.companies$.subscribe(
+    //   (companies: { empresa: string }[]) => {
+    //     if (companies.length > 0) {
+    //       this.companiesList = [...companies.map((d) => d.empresa)];
+    //     }
+    //   }
+    // );
 
-    this.adressService.fetchCompanies();
+    // this.adressService.fetchCompanies();
     // this.adressService.fetchAddresses(
     //   this.selectedOpeartorType,
     //   this.selectedCompany
@@ -310,15 +327,14 @@ export class MapComponent implements OnInit, OnDestroy {
   }
 
   onManageFilters(e: any) {
-    const companies =
-      (this.selectedCompanies.value?.filter(
-        (company) => company !== 'select-all'
-      ) as string[]) || [];
+    const companies = this.selectedCompanies.value || [];
     const operators = (this.selectedOperators.value as string[]) || [];
     const grouping = this.selectedGrouping;
     const range: DateRange<Date> = this.rangeInput.value as DateRange<Date>;
     const startDate = format(range.start || new Date(), 'yyyy-MM-dd HH:mm:ss');
-    const endDate = format(range.end || new Date(), 'yyyy-MM-dd HH:mm:ss');
+    const endOfDay = new Date(range.end || new Date());
+    endOfDay.setHours(23, 59, 59);
+    const endDate = format(endOfDay, 'yyyy-MM-dd HH:mm:ss');
 
     this.loadingService.loadingOn();
     this.clearMapLayers();
@@ -338,5 +354,13 @@ export class MapComponent implements OnInit, OnDestroy {
 
   switchDisplayFilterDrawer() {
     this.displayFilterDrawer = !this.displayFilterDrawer;
+  }
+
+  getSelectedCompaniesNames() {
+    const companyNames = this.selectedCompanies.value?.map(
+      (option) => option[0]
+    );
+    const distinctCompanyNames = [...new Set(companyNames)];
+    return distinctCompanyNames.join(', ');
   }
 }

@@ -28,7 +28,7 @@ export class AdressService {
   companies$ = this.companiesSubject.asObservable();
 
   fetchAddresses(
-    companies: string[],
+    companies: string[][],
     operators: string[],
     startDate: string,
     endDate: string,
@@ -46,7 +46,7 @@ export class AdressService {
   }
 
   getLocations(
-    companies: string[],
+    companies: string[][],
     operators: string[],
     startDate: string,
     endDate: string,
@@ -54,7 +54,7 @@ export class AdressService {
   ): Observable<any> {
     return this.http.get(`${environment.BACKEND_URL}/locations`, {
       params: {
-        companies,
+        companies: JSON.stringify(companies),
         operators,
         startDate,
         endDate,
