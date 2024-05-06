@@ -162,7 +162,7 @@ export class MapComponent implements OnInit, OnDestroy {
   ];
   selectedCompanies = new FormControl<string[][] | undefined>([]);
 
-  chipOperatorList: string[] = ['Único', 'Dual', 'Multi', '4G'];
+  chipOperatorList: string[] = ['Único', 'Dual', 'Multi', 'Multi4G', 'Celular'];
   selectedOperators = new FormControl<string[] | undefined>([]);
 
   groupingList: { name: string; value: string }[] = [
@@ -357,10 +357,14 @@ export class MapComponent implements OnInit, OnDestroy {
   }
 
   getSelectedCompaniesNames() {
-    const companyNames = this.selectedCompanies.value?.map(
-      (option) => option[0]
-    );
-    const distinctCompanyNames = [...new Set(companyNames)];
-    return distinctCompanyNames.join(', ');
+    const companyNames = [
+      ...new Set(this.selectedCompanies.value?.map((option) => option[0])),
+    ];
+    return companyNames.map((company) => {
+      return `${company}(${this.selectedCompanies.value
+        ?.filter((option) => option[0] === company)
+        .map((option) => option[1])
+        .join(', ')})`;
+    });
   }
 }

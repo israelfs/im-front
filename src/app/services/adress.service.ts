@@ -1,14 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import {
-  BehaviorSubject,
-  Observable,
-  catchError,
-  map,
-  switchMap,
-  tap,
-  of,
-} from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { environment } from '../../environments/environment.development';
 import { PhotonKomootService } from './photon-komoot.service';
 
