@@ -283,3 +283,80 @@ export const prettyBadHeatmapDelayLayer: maplibregl.AddLayerObject = {
     'heatmap-opacity': 0.8,
   },
 };
+
+// TRANSMITNESS
+
+export const prettybadTransmitnessLayer: maplibregl.AddLayerObject = {
+  id: 'pretty-bad-transmitness',
+  type: 'heatmap',
+  source: 'location',
+  filter: [
+    'all',
+    ['>=', ['get', 'transmitness'], 0],
+    ['<=', ['get', 'transmitness'], 0.1],
+  ],
+  paint: {
+    'heatmap-color': [
+      'interpolate',
+      ['linear'],
+      ['heatmap-density'],
+      0,
+      'rgba(255, 0, 0, 0)',
+      1,
+      'rgba(255, 0, 0, 1)',
+    ],
+    'heatmap-intensity': 1,
+    'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 0, 22, 30],
+    'heatmap-opacity': 0.8,
+  },
+};
+
+export const mediumTransmitnessLayer: maplibregl.AddLayerObject = {
+  id: 'medium-heatmap',
+  type: 'heatmap',
+  source: 'location',
+  filter: [
+    'all',
+    ['>', ['get', 'transmitness'], 0.1],
+    ['<=', ['get', 'transmitness'], 0.9],
+  ],
+  paint: {
+    'heatmap-color': [
+      'interpolate',
+      ['linear'],
+      ['heatmap-density'],
+      0,
+      'rgba(255, 255, 0, 0)',
+      1,
+      'rgb(255, 255, 0)',
+    ],
+    'heatmap-intensity': 1,
+    'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 0, 22, 30],
+    'heatmap-opacity': 0.8,
+  },
+};
+
+export const prettyGoodHeatmapTransmitnessLayer: maplibregl.AddLayerObject = {
+  id: 'pretty-good-heatmap',
+  type: 'heatmap',
+  source: 'location',
+  filter: [
+    'all',
+    ['>', ['get', 'transmitness'], 0.9],
+    ['<=', ['get', 'transmitness'], 1],
+  ],
+  paint: {
+    'heatmap-color': [
+      'interpolate',
+      ['linear'],
+      ['heatmap-density'],
+      0,
+      'rgba(0, 255, 0, 0)',
+      1,
+      'rgba(0, 255, 0, 1)',
+    ],
+    'heatmap-intensity': 1,
+    'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 0, 22, 30],
+    'heatmap-opacity': 0.8,
+  },
+};

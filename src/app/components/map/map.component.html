@@ -143,8 +143,11 @@
           </span></mat-radio-button
         >
         <mat-radio-button value="delay" [disabled]="loading$ | async">
+          <span class="font-normal text-base"> Delay </span></mat-radio-button
+        >
+        <mat-radio-button value="transmitness" [disabled]="loading$ | async">
           <span class="font-normal text-base">
-            Atraso no envio do sinal
+            Transmitância
           </span></mat-radio-button
         >
       </mat-radio-group>

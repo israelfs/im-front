@@ -51,6 +51,9 @@ import {
   prettyBadHeatmapDelayLayer,
   prettyGoodHeatmapSignalLayer,
   prettyGoodHeatmapDelayLayer,
+  prettybadTransmitnessLayer,
+  mediumTransmitnessLayer,
+  prettyGoodHeatmapTransmitnessLayer,
 } from './layers';
 import { SelectAllDirective } from '../../shared/directives/select-all.directive';
 import { format } from 'date-fns';
@@ -174,7 +177,7 @@ export class MapComponent implements OnInit, OnDestroy {
 
   selectedLayerType: 'heatmap' | 'circle' = 'heatmap';
 
-  selectedFilterType: 'signal' | 'delay' = 'signal';
+  selectedFilterType: 'signal' | 'delay' | 'transmitness' = 'signal';
 
   loading$: Observable<boolean>;
 
@@ -206,6 +209,7 @@ export class MapComponent implements OnInit, OnDestroy {
             id: index,
             signal: parseFloat(d.gsm_signal),
             timeDelay: parseFloat(d.transmit_delay),
+            transmitness: parseFloat(d.transmitness || -1),
             time: new Date(d.time_gps).getTime(),
           },
           geometry: {
@@ -270,12 +274,16 @@ export class MapComponent implements OnInit, OnDestroy {
         this.map.addLayer(mediumHeatmapSignalLayer);
         this.map.addLayer(goodHeatmapSignalLayer);
         this.map.addLayer(prettyGoodHeatmapSignalLayer);
-      } else {
+      } else if (this.selectedFilterType === 'delay') {
         this.map.addLayer(prettyGoodHeatmapDelayLayer);
         this.map.addLayer(goodHeatmapDelayLayer);
         this.map.addLayer(mediumHeatmapDelayLayer);
         this.map.addLayer(badHeatmapDelayLayer);
         this.map.addLayer(prettyBadHeatmapDelayLayer);
+      } else {
+        this.map.addLayer(prettybadTransmitnessLayer);
+        this.map.addLayer(mediumTransmitnessLayer);
+        this.map.addLayer(prettyGoodHeatmapTransmitnessLayer);
       }
     }
   }
