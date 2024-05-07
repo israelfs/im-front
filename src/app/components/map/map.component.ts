@@ -14,11 +14,13 @@ import { AdressService } from '../../services/adress.service';
 import { Observable, Subscription, finalize } from 'rxjs';
 import { OsrmService } from '../../services/osrm.service';
 import { colors } from '../../shared/colors';
+import { DomSanitizer } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import {
   DateRange,
@@ -35,7 +37,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 
-import { mapTilerStyles } from './map-styles';
+import { AREACHARTICON, LINECHARTICON, mapTilerStyles } from './map-styles';
 import { AsyncPipe, NgClass, NgIf, NgTemplateOutlet } from '@angular/common';
 import { LoadingService } from '../../services/loading.service';
 import {
@@ -58,6 +60,8 @@ import {
 import { SelectAllDirective } from '../../shared/directives/select-all.directive';
 import { format } from 'date-fns';
 import { PlaceAutocompleteComponent } from '../place-autocomplete/place-autocomplete.component';
+import { MatDialog } from '@angular/material/dialog';
+import { ChartDialog } from '../chart-dialog/chart-dialog.component';
 
 type gtfsType = {
   gsm_signal: number;
@@ -83,6 +87,7 @@ type gtfsType = {
     MatProgressSpinnerModule,
     MatSelectModule,
     FormsModule,
+    MatIconModule,
     MatSidenavModule,
     MatFormFieldModule,
     ReactiveFormsModule,
@@ -187,9 +192,20 @@ export class MapComponent implements OnInit, OnDestroy {
     private osrmService: OsrmService,
     private loadingService: LoadingService,
     private cdr: ChangeDetectorRef,
-    private _snackBar: MatSnackBar
+    private _snackBar: MatSnackBar,
+    public dialog: MatDialog,
+    iconRegistry: MatIconRegistry,
+    sanitizer: DomSanitizer
   ) {
     this.loading$ = this.loadingService.loading$;
+    iconRegistry.addSvgIconLiteral(
+      'area-chart',
+      sanitizer.bypassSecurityTrustHtml(AREACHARTICON)
+    );
+    iconRegistry.addSvgIconLiteral(
+      'line-chart',
+      sanitizer.bypassSecurityTrustHtml(LINECHARTICON)
+    );
   }
 
   ngOnInit(): void {
@@ -253,6 +269,16 @@ export class MapComponent implements OnInit, OnDestroy {
     });
     this.loading$.subscribe(() => {
       this.cdr.detectChanges();
+    });
+  }
+
+  openDialog(): void {
+    const dialogRef = this.dialog.open(ChartDialog, {
+      data: { name: 'bob', animal: 'dog' },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      console.log('The dialog was closed');
     });
   }
 

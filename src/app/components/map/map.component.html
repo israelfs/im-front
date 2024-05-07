@@ -113,6 +113,42 @@
 
     <div class="w-full border-t-2 border-gray-300 my-4"></div>
 
+    <div class="h-24 flex flex-col items-center w-full overflow-auto">
+      <mat-label class="my-2 text-lg">
+        <h1 class="font-medium">Gráficos</h1></mat-label
+      >
+      <div class="flex flex-row">
+        <div class="flex justify-center px-2">
+          <button
+            mat-icon-button
+            (click)="openDialog()"
+            matTooltip="Offline por hora"
+          >
+            <mat-icon
+              svgIcon="area-chart"
+              aria-hidden="false"
+              class="scale-150"
+            ></mat-icon>
+          </button>
+        </div>
+        <div class="flex justify-center">
+          <button
+            mat-icon-button
+            (click)="openDialog()"
+            matTooltip="Delay de comunicação"
+          >
+            <mat-icon
+              svgIcon="line-chart"
+              aria-hidden="false"
+              class="scale-150"
+            ></mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="w-full border-t-2 border-gray-300 my-4"></div>
+
     <div class="flex flex-col items-center w-full overflow-auto flex-grow">
       <mat-label class="mt-2 text-lg">
         <h1 class="font-medium">Tipo de layer</h1></mat-label
