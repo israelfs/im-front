@@ -108,8 +108,10 @@ type gtfsType = {
 })
 export class MapComponent implements OnInit, OnDestroy {
   map: Map | undefined;
-  private subscriptions: Subscription[] = [];
   markers: Marker[] = [];
+
+  private addressSubscription: Subscription | null = null;
+  private chartDataSubscription: Subscription | null = null;
 
   @ViewChild('map')
   private mapContainer!: ElementRef<HTMLElement>;
@@ -170,7 +172,7 @@ export class MapComponent implements OnInit, OnDestroy {
   ];
   selectedCompanies = new FormControl<string[][] | undefined>([]);
 
-  chipOperatorList: string[] = ['Único', 'Dual', 'Multi', 'Multi4G', 'Celular'];
+  chipOperatorList = ['Único', 'Dual', 'Multi', 'Multi4G', 'Celular'];
   selectedOperators = new FormControl<string[] | undefined>([]);
 
   groupingList: { name: string; value: string }[] = [
@@ -187,9 +189,7 @@ export class MapComponent implements OnInit, OnDestroy {
   loading$: Observable<boolean>;
 
   constructor(
-    private photonService: PhotonKomootService,
     private adressService: AdressService,
-    private osrmService: OsrmService,
     private loadingService: LoadingService,
     private cdr: ChangeDetectorRef,
     private _snackBar: MatSnackBar,
@@ -208,52 +208,7 @@ export class MapComponent implements OnInit, OnDestroy {
     );
   }
 
-  ngOnInit(): void {
-    const sub = this.adressService.addresses$.subscribe((addresses) => {
-      console.log(addresses.length);
-      this._snackBar.open(
-        `Foram encontrados ${addresses.length} registros`,
-        'Fechar',
-        {
-          duration: 5000,
-        }
-      );
-      this.locationData = addresses.map((d: any, index) => {
-        return {
-          type: 'Feature',
-          properties: {
-            id: index,
-            signal: parseFloat(d.gsm_signal),
-            timeDelay: parseFloat(d.transmit_delay),
-            transmitness: parseFloat(d.transmitness || -1),
-            time: new Date(d.time_gps).getTime(),
-          },
-          geometry: {
-            type: 'Point',
-            coordinates: [parseFloat(d.longitude), parseFloat(d.latitude)],
-          },
-        };
-      });
-
-      this.initializeMap();
-    });
-
-    this.subscriptions.push(sub);
-
-    // const companySub = this.adressService.companies$.subscribe(
-    //   (companies: { empresa: string }[]) => {
-    //     if (companies.length > 0) {
-    //       this.companiesList = [...companies.map((d) => d.empresa)];
-    //     }
-    //   }
-    // );
-
-    // this.adressService.fetchCompanies();
-    // this.adressService.fetchAddresses(
-    //   this.selectedOpeartorType,
-    //   this.selectedCompany
-    // );
-  }
+  ngOnInit(): void {}
 
   ngAfterViewInit(): void {
     const initialState = {
@@ -272,14 +227,27 @@ export class MapComponent implements OnInit, OnDestroy {
     });
   }
 
-  openDialog(): void {
-    const dialogRef = this.dialog.open(ChartDialog, {
-      data: { name: 'bob', animal: 'dog' },
-    });
+  openDialog(typeOfChart: string): void {
+    this.loadingService.loadingOn();
 
-    dialogRef.afterClosed().subscribe((result) => {
-      console.log('The dialog was closed');
-    });
+    if (this.chartDataSubscription) {
+      this.chartDataSubscription.unsubscribe();
+    }
+
+    this.chartDataSubscription = this.adressService
+      .getChartData(typeOfChart)
+      .subscribe((chartData) => {
+        console.log('chartData', chartData);
+
+        const dialogRef = this.dialog.open(ChartDialog, {
+          data: { typeOfGraph: typeOfChart },
+        });
+
+        dialogRef.afterClosed().subscribe((result) => {
+          console.log('The dialog was closed');
+        });
+        this.loadingService.loadingOff();
+      });
   }
 
   useCircleLayer() {
@@ -339,11 +307,6 @@ export class MapComponent implements OnInit, OnDestroy {
     }
   }
 
-  ngOnDestroy() {
-    this.subscriptions.forEach((subscription) => subscription.unsubscribe());
-    this.map?.remove();
-  }
-
   onChangeStyle() {
     this.currentStyle = (this.currentStyle + 1) % mapTilerStyles.length;
     this.map?.setStyle(mapTilerStyles[this.currentStyle]);
@@ -373,17 +336,55 @@ export class MapComponent implements OnInit, OnDestroy {
     this.loadingService.loadingOn();
     this.clearMapLayers();
     if (this.makeNewRequest) {
-      this.adressService.fetchAddresses(
-        companies,
-        operators,
-        startDate,
-        endDate,
-        grouping
-      );
+      if (this.addressSubscription) {
+        this.addressSubscription.unsubscribe();
+      }
+
+      this.addressSubscription = this.adressService
+        .getLocations(companies, operators, startDate, endDate, grouping)
+        .subscribe((addresses) => {
+          console.log(addresses.length);
+          this._snackBar.open(
+            `Foram encontrados ${addresses.length} registros`,
+            'Fechar',
+            {
+              duration: 5000,
+            }
+          );
+          this.locationData = addresses.map((d: any, index: number) => {
+            return {
+              type: 'Feature',
+              properties: {
+                id: index,
+                signal: parseFloat(d.gsm_signal),
+                timeDelay: parseFloat(d.transmit_delay),
+                transmitness: parseFloat(d.transmitness || -1),
+                time: new Date(d.time_gps).getTime(),
+              },
+              geometry: {
+                type: 'Point',
+                coordinates: [parseFloat(d.longitude), parseFloat(d.latitude)],
+              },
+            };
+          });
+
+          this.initializeMap();
+        });
+
       this.makeNewRequest = false;
     } else {
       this.initializeMap();
     }
+  }
+
+  ngOnDestroy() {
+    if (this.addressSubscription) {
+      this.addressSubscription.unsubscribe();
+    }
+    if (this.chartDataSubscription) {
+      this.chartDataSubscription.unsubscribe();
+    }
+    this.map?.remove();
   }
 
   switchDisplayFilterDrawer() {

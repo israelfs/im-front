@@ -13,29 +13,9 @@ export class AdressService {
     private photonService: PhotonKomootService
   ) {}
 
-  private addressesSubject = new BehaviorSubject<any[]>([]);
   private companiesSubject = new BehaviorSubject<any[]>([]);
 
-  addresses$ = this.addressesSubject.asObservable();
   companies$ = this.companiesSubject.asObservable();
-
-  fetchAddresses(
-    companies: string[][],
-    operators: string[],
-    startDate: string,
-    endDate: string,
-    grouping: string
-  ): void {
-    this.getLocations(
-      companies,
-      operators,
-      startDate,
-      endDate,
-      grouping
-    ).subscribe((addresses) => {
-      this.addressesSubject.next(addresses);
-    });
-  }
 
   getLocations(
     companies: string[][],
@@ -53,6 +33,10 @@ export class AdressService {
         grouping,
       },
     });
+  }
+
+  getChartData(typeOfChart: string): Observable<any> {
+    return this.http.get(`${environment.BACKEND_URL}/locationChart`);
   }
 
   fetchCompanies(): void {
