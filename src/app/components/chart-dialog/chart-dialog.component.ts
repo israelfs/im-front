@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, TemplateRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -17,44 +17,9 @@ import {
 import { typeOf } from 'maplibre-gl';
 
 export interface DialogData {
-  typeOfGraph: string;
+  type: string;
+  series: any[];
 }
-
-export const single: any[] = [
-  {
-    name: 'Delays de Retransmissão',
-    series: [
-      {
-        name: '0', // delay de 0 segundos
-        value: '56', // 0% das posições são recebidas até 0 segundos
-      },
-      {
-        name: '20', // delay de 20 segundos
-        value: '75.54', // Aproximadamente 28.57% das posições são recebidas até 20 segundos
-      },
-      {
-        name: '60', // delay de 60 segundos
-        value: '78.54', // Aproximadamente 42.86% das posições são recebidas até 60 segundos
-      },
-      {
-        name: '600', // delay de 600 segundos (10 minutos)
-        value: '81.12', // Aproximadamente 57.14% das posições são recebidas até 10 minutos
-      },
-      {
-        name: '3600', // delay de 3600 segundos (1 hora)
-        value: '81.43', // Aproximadamente 71.43% das posições são recebidas até 1 hora
-      },
-      {
-        name: '7200', // delay de 7200 segundos (2 horas)
-        value: '85.71', // Aproximadamente 85.71% das posições são recebidas até 2 horas
-      },
-      {
-        name: '86400', // delay de 86400 segundos (1 dia)
-        value: '86', // 100% das posições são recebidas até 1 dia
-      },
-    ],
-  },
-];
 
 @Component({
   selector: 'chart-dialog',
@@ -74,8 +39,8 @@ export const single: any[] = [
   ],
 })
 export class ChartDialog implements OnInit {
-  single: any[] = [];
-  public typeOfGraph: string;
+  public single: any[] = [];
+  public type: string;
   public view: any = [700, 400];
   public showXAxis = true;
   public showYAxis = true;
@@ -85,7 +50,7 @@ export class ChartDialog implements OnInit {
   public xAxisLabel!: string;
   public showYAxisLabel = true;
   public yAxisLabel!: string;
-  public graphDataChart: any[] = [];
+  public xAxisTicks!: any[];
   public colorScheme = {
     domain: ['#5AA454', '#A10A28', '#C7B42C', '#AAAAAA'],
   };
@@ -94,21 +59,44 @@ export class ChartDialog implements OnInit {
     public dialogRef: MatDialogRef<ChartDialog>,
     @Inject(MAT_DIALOG_DATA) public data: DialogData
   ) {
-    Object.assign(this, { single });
-    this.typeOfGraph = data.typeOfGraph;
+    this.type = data.type;
+    this.single = [
+      {
+        name: 'Delays de Retransmissão',
+        series: data.series,
+      },
+    ];
   }
 
   ngOnInit(): void {
-    // fetch data from API
-    if (this.data.typeOfGraph === 'delay') {
+    if (this.type === 'delay') {
       this.showLegend = false;
       this.xAxisLabel = 'Tempo de retransmissão(s)';
       this.yAxisLabel = '% de recebimento';
-    } else if (this.data.typeOfGraph === 'offline') {
+      this.xAxisTicks = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20];
+    } else if (this.type === 'offline') {
       this.showLegend = true;
       this.xAxisLabel = 'Dia';
       this.yAxisLabel = 'Nº de dispositivos Offline';
     }
+  }
+
+  public formatXAxisTicks(value: number): string {
+    if (value === 0) return '0s';
+    else if (value === 2) return '20s';
+    else if (value === 4) return '1m';
+    else if (value === 6) return '5m';
+    else if (value === 8) return '15m';
+    else if (value === 10) return '30m';
+    else if (value === 12) return '1h';
+    else if (value === 14) return '2h';
+    else if (value === 16) return '6h';
+    else if (value === 18) return '1d';
+    else return '1d+';
+  }
+
+  public formatYAxisTicks(value: number): string {
+    return `${value.toString()}%`;
   }
 
   onClose(): void {

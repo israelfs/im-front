@@ -11,7 +11,18 @@
     [showYAxisLabel]="showYAxisLabel"
     [xAxisLabel]="xAxisLabel"
     [yAxisLabel]="yAxisLabel"
+    [xAxisTicks]="xAxisTicks"
+    [xAxisTickFormatting]="formatXAxisTicks"
+    [yAxisTickFormatting]="formatYAxisTicks"
   >
+    <ng-template #tooltipTemplate let-model="model">
+      <div class="p-2">
+        <strong
+          >{{ formatXAxisTicks(model.name) }} -
+          {{ model.value | number : "1.2-2" }}%</strong
+        >
+      </div>
+    </ng-template>
   </ngx-charts-line-chart>
 </mat-dialog-content>
 <mat-dialog-actions>

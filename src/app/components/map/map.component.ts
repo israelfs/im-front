@@ -111,7 +111,6 @@ export class MapComponent implements OnInit, OnDestroy {
   markers: Marker[] = [];
 
   private addressSubscription: Subscription | null = null;
-  private chartDataSubscription: Subscription | null = null;
 
   @ViewChild('map')
   private mapContainer!: ElementRef<HTMLElement>;
@@ -125,11 +124,9 @@ export class MapComponent implements OnInit, OnDestroy {
         longitude: number;
       }
     | undefined;
-
   get geocodeFilter() {
     return this._geocodeFilter;
   }
-
   set geocodeFilter(
     value: { latitude: number; longitude: number } | undefined
   ) {
@@ -141,6 +138,8 @@ export class MapComponent implements OnInit, OnDestroy {
       }
     }
   }
+
+  chartData: any[] = [];
 
   displayFilterDrawer = false;
 
@@ -172,7 +171,7 @@ export class MapComponent implements OnInit, OnDestroy {
   ];
   selectedCompanies = new FormControl<string[][] | undefined>([]);
 
-  chipOperatorList = ['Único', 'Dual', 'Multi', 'Multi4G', 'Celular'];
+  chipOperatorList: string[] = ['Único', 'Dual', 'Multi', 'Multi4G', 'Celular'];
   selectedOperators = new FormControl<string[] | undefined>([]);
 
   groupingList: { name: string; value: string }[] = [
@@ -228,26 +227,16 @@ export class MapComponent implements OnInit, OnDestroy {
   }
 
   openDialog(typeOfChart: string): void {
-    this.loadingService.loadingOn();
+    const dialogRef = this.dialog.open(ChartDialog, {
+      data: {
+        type: typeOfChart,
+        series: this.chartData,
+      },
+    });
 
-    if (this.chartDataSubscription) {
-      this.chartDataSubscription.unsubscribe();
-    }
-
-    this.chartDataSubscription = this.adressService
-      .getChartData(typeOfChart)
-      .subscribe((chartData) => {
-        console.log('chartData', chartData);
-
-        const dialogRef = this.dialog.open(ChartDialog, {
-          data: { typeOfGraph: typeOfChart },
-        });
-
-        dialogRef.afterClosed().subscribe((result) => {
-          console.log('The dialog was closed');
-        });
-        this.loadingService.loadingOff();
-      });
+    dialogRef.afterClosed().subscribe((result) => {
+      console.log('The dialog was closed');
+    });
   }
 
   useCircleLayer() {
@@ -342,16 +331,26 @@ export class MapComponent implements OnInit, OnDestroy {
 
       this.addressSubscription = this.adressService
         .getLocations(companies, operators, startDate, endDate, grouping)
-        .subscribe((addresses) => {
-          console.log(addresses.length);
+        .subscribe(({ locations, delay }) => {
+          // console.log(locations.length);
+          console.log('backend data', delay);
+
+          this.chartData = delay.map(
+            (item: { time: number; value: number }, index: number) => ({
+              name: 2 * index, // Get time in multiples of 2
+              value: item.value * 100,
+            })
+          );
+
           this._snackBar.open(
-            `Foram encontrados ${addresses.length} registros`,
+            `Foram encontrados ${locations.length} registros`,
             'Fechar',
             {
               duration: 5000,
             }
           );
-          this.locationData = addresses.map((d: any, index: number) => {
+
+          this.locationData = locations.map((d: any, index: number) => {
             return {
               type: 'Feature',
               properties: {
@@ -380,9 +379,6 @@ export class MapComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     if (this.addressSubscription) {
       this.addressSubscription.unsubscribe();
-    }
-    if (this.chartDataSubscription) {
-      this.chartDataSubscription.unsubscribe();
     }
     this.map?.remove();
   }

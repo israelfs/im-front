@@ -35,10 +35,6 @@ export class AdressService {
     });
   }
 
-  getChartData(typeOfChart: string): Observable<any> {
-    return this.http.get(`${environment.BACKEND_URL}/locationChart`);
-  }
-
   fetchCompanies(): void {
     this.getCompanies().subscribe((companies) => {
       this.companiesSubject.next(companies);
