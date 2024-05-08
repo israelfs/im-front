@@ -43,6 +43,7 @@
           [formControl]="selectedOperators"
           class="mt-1"
           (selectionChange)="makeNewRequest = true"
+          multiple
         >
           <!-- <mat-select-trigger>
             {{selectedOperators.value?.[0] || ''}}
