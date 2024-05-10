@@ -63,18 +63,6 @@ import { PlaceAutocompleteComponent } from '../place-autocomplete/place-autocomp
 import { MatDialog } from '@angular/material/dialog';
 import { ChartDialog } from '../chart-dialog/chart-dialog.component';
 
-type gtfsType = {
-  gsm_signal: number;
-  heading: number;
-  idposition: string;
-  idvehicle: number;
-  latitude: number;
-  longitude: number;
-  time_gps: string;
-  time_rtc: string;
-  time_transmit: string;
-};
-
 @Component({
   selector: 'app-map',
   standalone: true,
@@ -139,7 +127,8 @@ export class MapComponent implements OnInit, OnDestroy {
     }
   }
 
-  chartData: any[] = [];
+  delayChartData: any[] = [];
+  offlineChartData: any[] = [];
 
   displayFilterDrawer = false;
 
@@ -230,7 +219,8 @@ export class MapComponent implements OnInit, OnDestroy {
     const dialogRef = this.dialog.open(ChartDialog, {
       data: {
         type: typeOfChart,
-        series: this.chartData,
+        chartData:
+          typeOfChart === 'delay' ? this.delayChartData : this.offlineChartData,
       },
     });
 
@@ -331,16 +321,20 @@ export class MapComponent implements OnInit, OnDestroy {
 
       this.addressSubscription = this.adressService
         .getLocations(companies, operators, startDate, endDate, grouping)
-        .subscribe(({ locations, delay }) => {
-          // console.log(locations.length);
-          console.log('backend data', delay);
+        .subscribe(({ locations, delay, offline }) => {
+          this.delayChartData = [
+            {
+              name: 'Delay de Retransmissão',
+              series: delay.map(
+                (item: { time: number; value: number }, index: number) => ({
+                  name: 2 * index, // Get time in multiples of 2
+                  value: item.value * 100,
+                })
+              ),
+            },
+          ];
 
-          this.chartData = delay.map(
-            (item: { time: number; value: number }, index: number) => ({
-              name: 2 * index, // Get time in multiples of 2
-              value: item.value * 100,
-            })
-          );
+          this.offlineChartData = offline;
 
           this._snackBar.open(
             `Foram encontrados ${locations.length} registros`,

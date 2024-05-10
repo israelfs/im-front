@@ -1,6 +1,10 @@
-<h2 mat-dialog-title>Gráfico</h2>
+<h2 mat-dialog-title>
+  Gráfico
+  {{ type === "delay" ? "Delay de comunicação" : "Offline por minuto" }}
+</h2>
 <mat-dialog-content>
   <ngx-charts-line-chart
+    *ngIf="type === 'delay'"
     [view]="view"
     [results]="single"
     [gradient]="gradient"
@@ -24,6 +28,31 @@
       </div>
     </ng-template>
   </ngx-charts-line-chart>
+  <ngx-charts-area-chart
+    *ngIf="type === 'offline'"
+    [view]="view"
+    [results]="single"
+    [gradient]="gradient"
+    [xAxis]="showXAxis"
+    [yAxis]="showYAxis"
+    [legend]="showLegend"
+    [showXAxisLabel]="showXAxisLabel"
+    [showYAxisLabel]="showYAxisLabel"
+    [xAxisLabel]="xAxisLabel"
+    [yAxisLabel]="yAxisLabel"
+    [xAxisTicks]="xAxisTicks"
+    [xAxisTickFormatting]="formatXAxisTicksOfflineChart"
+    [timeline]="timeline"
+  >
+    <ng-template #tooltipTemplate let-model="model">
+      <div class="p-2">
+        <strong
+          >{{ formatXAxisTicksOfflineChart(model.name) }} -
+          {{ model.value }}</strong
+        >
+      </div>
+    </ng-template>
+  </ngx-charts-area-chart>
 </mat-dialog-content>
 <mat-dialog-actions>
   <button mat-button (click)="onClose()">Ok</button>

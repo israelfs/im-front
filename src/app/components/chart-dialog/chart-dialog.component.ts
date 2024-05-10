@@ -18,7 +18,7 @@ import { typeOf } from 'maplibre-gl';
 
 export interface DialogData {
   type: string;
-  series: any[];
+  chartData: any[];
 }
 
 @Component({
@@ -44,13 +44,15 @@ export class ChartDialog implements OnInit {
   public view: any = [700, 400];
   public showXAxis = true;
   public showYAxis = true;
-  public gradient = false;
+  public gradient = true;
   public showLegend!: boolean;
   public showXAxisLabel = true;
   public xAxisLabel!: string;
   public showYAxisLabel = true;
   public yAxisLabel!: string;
   public xAxisTicks!: any[];
+  public wrapTicks = true;
+  public timeline = true;
   public colorScheme = {
     domain: ['#5AA454', '#A10A28', '#C7B42C', '#AAAAAA'],
   };
@@ -60,12 +62,7 @@ export class ChartDialog implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: DialogData
   ) {
     this.type = data.type;
-    this.single = [
-      {
-        name: 'Delays de Retransmissão',
-        series: data.series,
-      },
-    ];
+    this.single = data.chartData;
   }
 
   ngOnInit(): void {
@@ -74,10 +71,12 @@ export class ChartDialog implements OnInit {
       this.xAxisLabel = 'Tempo de retransmissão(s)';
       this.yAxisLabel = '% de recebimento';
       this.xAxisTicks = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20];
+      this.view = [1200, 500];
     } else if (this.type === 'offline') {
       this.showLegend = true;
-      this.xAxisLabel = 'Dia';
+      this.showXAxisLabel = false;
       this.yAxisLabel = 'Nº de dispositivos Offline';
+      this.view = [1200, 500];
     }
   }
 
@@ -93,6 +92,13 @@ export class ChartDialog implements OnInit {
     else if (value === 16) return '6h';
     else if (value === 18) return '1d';
     else return '1d+';
+  }
+
+  public formatXAxisTicksOfflineChart(value: string) {
+    let date = new Date(value);
+    let hours = date.getHours().toString().padStart(2, '0');
+    let minutes = date.getMinutes().toString().padStart(2, '0');
+    return hours + ':' + minutes;
   }
 
   public formatYAxisTicks(value: number): string {
