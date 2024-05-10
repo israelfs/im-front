@@ -7,7 +7,6 @@
     *ngIf="type === 'delay'"
     [view]="view"
     [results]="single"
-    [gradient]="gradient"
     [xAxis]="showXAxis"
     [yAxis]="showYAxis"
     [legend]="showLegend"
@@ -32,7 +31,6 @@
     *ngIf="type === 'offline'"
     [view]="view"
     [results]="single"
-    [gradient]="gradient"
     [xAxis]="showXAxis"
     [yAxis]="showYAxis"
     [legend]="showLegend"
@@ -41,7 +39,6 @@
     [xAxisLabel]="xAxisLabel"
     [yAxisLabel]="yAxisLabel"
     [xAxisTicks]="xAxisTicks"
-    [xAxisTickFormatting]="formatXAxisTicksOfflineChart"
     [timeline]="timeline"
   >
     <ng-template #tooltipTemplate let-model="model">

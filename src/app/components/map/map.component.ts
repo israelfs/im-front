@@ -334,7 +334,18 @@ export class MapComponent implements OnInit, OnDestroy {
             },
           ];
 
-          this.offlineChartData = offline;
+          this.offlineChartData = offline.map(
+            (item: {
+              name: string;
+              series: { name: string; value: number }[];
+            }) => ({
+              ...item,
+              series: item.series.map((d) => ({
+                ...d,
+                name: new Date(d.name),
+              })),
+            })
+          );
 
           this._snackBar.open(
             `Foram encontrados ${locations.length} registros`,

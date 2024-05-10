@@ -41,10 +41,9 @@ export interface DialogData {
 export class ChartDialog implements OnInit {
   public single: any[] = [];
   public type: string;
-  public view: any = [700, 400];
+  public view: any = [1200, 500];
   public showXAxis = true;
   public showYAxis = true;
-  public gradient = true;
   public showLegend!: boolean;
   public showXAxisLabel = true;
   public xAxisLabel!: string;
@@ -71,12 +70,10 @@ export class ChartDialog implements OnInit {
       this.xAxisLabel = 'Tempo de retransmissão(s)';
       this.yAxisLabel = '% de recebimento';
       this.xAxisTicks = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20];
-      this.view = [1200, 500];
     } else if (this.type === 'offline') {
       this.showLegend = true;
       this.showXAxisLabel = false;
       this.yAxisLabel = 'Nº de dispositivos Offline';
-      this.view = [1200, 500];
     }
   }
 
